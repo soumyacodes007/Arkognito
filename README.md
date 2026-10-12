@@ -89,7 +89,8 @@ npm run setup                          # creates wallets + issuer seed in .env, 
 OHTTP_ALLOW_LOCAL=on docker compose up -d
 ```
 
-Fund the printed addresses at the [Tiramisu faucet](https://hub.arkiv.network/faucet). For a public
+Fund the printed addresses at the [Tiramisu faucet](https://hub.arkiv.network/faucet). To put the
+demo online on Railway + Vercel, follow **[docs/deploy-railway-vercel.md](docs/deploy-railway-vercel.md)**. For a public
 deployment with HTTPS, Railway or Fly, running without Docker, the full configuration reference
 and operations notes, see **[docs/self-hosting.md](docs/self-hosting.md)**.
 
