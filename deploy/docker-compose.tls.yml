@@ -1,0 +1,22 @@
+# Adds Caddy for HTTPS. Use together with the main compose file:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.tls.yml up -d
+services:
+  caddy:
+    image: caddy:2.10
+    restart: always
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on: [relay-1, relay-2, ohttp-relay]
+
+  # With TLS in front, the services no longer need public ports.
+  relay-1:
+    ports: !reset []
+  relay-2:
+    ports: !reset []
+  ohttp-relay:
+    ports: !reset []
+
+volumes:
+  caddy-data:

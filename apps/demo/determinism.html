@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wallet check</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
+      <h1>Does your wallet sign deterministically?</h1>
+      <p class="muted">Arkognito derives your keys from one signature, so the wallet must produce the same signature every time (edge case K1).</p>
+    </header>
+    <div id="app"></div>
+  </main>
+  <script type="module">
+    import { mountDeterminism } from "/src/determinism.ts"
+    mountDeterminism(document.getElementById("app"))
+  </script>
+</body>
+</html>

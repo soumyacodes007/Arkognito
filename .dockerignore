@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+.env
+.env.*
+.git
+.claude
+apps/demo/src
+apps/demo/*.html
+tests
+spike

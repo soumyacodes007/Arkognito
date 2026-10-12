@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sketch, public</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
+      <h1>Sketch App (public)</h1>
+      <p class="muted">Arkiv's MetaMask tutorial on SDK 0.8. Your wallet creates and owns every sketch, and pays the gas.</p>
+    </header>
+    <div id="app"></div>
+  </main>
+  <script type="module">
+    import { mountSketchApp } from "/src/sketch-ui.ts"
+    import { openStore } from "/src/store-public.ts"
+    mountSketchApp(document.getElementById("app"), openStore, "public")
+  </script>
+</body>
+</html>

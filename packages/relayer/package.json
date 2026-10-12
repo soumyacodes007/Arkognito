@@ -1,0 +1,19 @@
+{
+  "name": "arkognito-relayer",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/start.ts",
+    "dev": "tsx --conditions=arkognito-source src/start.ts"
+  },
+  "dependencies": {
+    "arkognito": "0.1.0",
+    "@arkiv-network/sdk": "0.8.1",
+    "viem": "2.57.4",
+    "@noble/hashes": "2.4.0",
+    "@cloudflare/blindrsa-ts": "0.4.6",
+    "tsx": "4.23.15"
+  }
+}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sketch, private</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
+      <h1>Sketch App (private, with Arkognito)</h1>
+      <p class="muted">Same app, 3 lines changed. Each sketch gets a one-time owner; a shared relayer writes it in a shuffled batch and pays the gas.</p>
+    </header>
+    <div id="app"></div>
+  </main>
+  <script type="module">
+    import { mountSketchApp } from "/src/sketch-ui.ts"
+    import { openStore } from "/src/store-private.ts"
+    mountSketchApp(document.getElementById("app"), openStore, "private")
+  </script>
+</body>
+</html>

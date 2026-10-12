@@ -1,0 +1,37 @@
+{
+  "name": "arkognito-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@arkiv-network/sdk": "0.8.1",
+    "@types/node": "26.6.4",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "viem": "2.57.4"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "npm run build -w arkognito",
+    "test": "node --conditions=arkognito-source --import tsx --test packages/sdk/test/unit.test.ts",
+    "test:phase2": "tsx --conditions=arkognito-source tests/phase2.ts",
+    "test:phase3": "tsx --conditions=arkognito-source tests/phase3.ts",
+    "test:phase4": "tsx --conditions=arkognito-source tests/phase4.ts",
+    "test:phase5": "tsx --conditions=arkognito-source tests/phase5.ts",
+    "test:issuer": "tsx --conditions=arkognito-source tests/issuer-hardening.ts",
+    "spike": "tsx --conditions=arkognito-source spike/01-batch-transfer.ts",
+    "relayer": "tsx --conditions=arkognito-source packages/relayer/src/start.ts relayer",
+    "dev:relayers": "tsx --conditions=arkognito-source packages/relayer/src/dev.ts",
+    "dev:demo": "npm run dev -w arkognito-demo",
+    "test:edge": "tsx --conditions=arkognito-source tests/edge-cases.ts",
+    "ohttp-relay": "tsx --conditions=arkognito-source packages/relayer/src/start.ts ohttp-relay",
+    "setup": "tsx --conditions=arkognito-source scripts/setup.ts"
+  },
+  "license": "MIT"
+}

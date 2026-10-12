@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Observer view</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
+      <h1>What an observer sees</h1>
+      <p class="muted">Everything below is read straight from Arkiv with no wallet: the same data anyone can query.</p>
+    </header>
+    <div id="app"></div>
+  </main>
+  <script type="module">
+    import { mountObserver } from "/src/observer.ts"
+    mountObserver(document.getElementById("app"))
+  </script>
+</body>
+</html>

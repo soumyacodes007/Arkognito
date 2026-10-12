@@ -1,0 +1,50 @@
+{
+  "name": "arkognito",
+  "version": "0.1.0",
+  "description": "Unlinkable ownership for Arkiv: records owned by fresh per-record addresses, written through an open relayer",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "arkognito-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@arkiv-network/sdk": "0.8.1",
+    "viem": "^2.57.4"
+  },
+  "dependencies": {
+    "@cloudflare/blindrsa-ts": "0.4.6",
+    "@noble/hashes": "2.4.0",
+    "@noble/ciphers": "2.4.0",
+    "@hpke/core": "1.9.0",
+    "@hpke/dhkem-x25519": "1.8.0"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/fix-worker-url.mjs",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soumyacodes007/Arkognito"
+  },
+  "keywords": [
+    "arkiv",
+    "privacy",
+    "stealth-address",
+    "blind-signatures",
+    "golem"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}

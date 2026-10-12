@@ -1,0 +1,22 @@
+# TLS in front of a self-hosted Arkognito network (Caddy gets certificates automatically).
+# Replace the hostnames, point their DNS at this machine, then:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.tls.yml up -d
+# and set in .env:
+#   RELAY_1_PUBLIC_URL=https://relay-1.example.com
+#   RELAY_2_PUBLIC_URL=https://relay-2.example.com
+
+relay-1.example.com {
+	reverse_proxy relay-1:8787
+}
+
+relay-2.example.com {
+	reverse_proxy relay-2:8788
+}
+
+# Run the OHTTP relay on a different operator's machine in production. It is here for completeness.
+ohttp.example.com {
+	reverse_proxy ohttp-relay:8790
+	log {
+		output discard
+	}
+}

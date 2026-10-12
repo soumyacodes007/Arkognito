@@ -1,0 +1,57 @@
+# A complete self-hosted Arkognito network:
+#   relay-1      relayer + token issuer (HTTP API on :8787)
+#   relay-2      second relayer (:8788), accepts relay-1's tokens
+#   ohttp-relay  Oblivious HTTP relay (:8790); in production run it under a different operator
+#
+#   npm run setup          # creates wallets + issuer seed in .env, shows addresses to fund
+#   docker compose up -d
+#
+# Keys come from .env via env_file. Nothing secret is written into this file.
+# For public deployment put TLS in front (see deploy/), set the *_PUBLIC_URL values to your https
+# URLs, and leave OHTTP_ALLOW_LOCAL unset.
+
+x-common: &common
+  build: .
+  image: arkognito:latest
+  env_file: .env
+  restart: always
+
+services:
+  relay-1:
+    <<: *common
+    environment:
+      ROLE: relayer
+      RELAYER_NAME: relay-1
+      RELAYER_KEY_VAR: RELAYER_1_PRIVATE_KEY
+      PORT: "8787"
+      RELAYER_PUBLIC_URL: ${RELAY_1_PUBLIC_URL:-http://localhost:8787}
+      ISSUER: "on"
+      ISSUER_URL: ${RELAY_1_PUBLIC_URL:-http://localhost:8787}
+      REQUIRE_TOKENS: "on"
+      ISSUER_QUOTA_FILE: /data/issuer-quota.json
+    ports: ["8787:8787"]
+    volumes: ["issuer-data:/data"]
+
+  relay-2:
+    <<: *common
+    environment:
+      ROLE: relayer
+      RELAYER_NAME: relay-2
+      RELAYER_KEY_VAR: RELAYER_2_PRIVATE_KEY
+      PORT: "8788"
+      RELAYER_PUBLIC_URL: ${RELAY_2_PUBLIC_URL:-http://localhost:8788}
+      REQUIRE_TOKENS: "on"
+      ISSUER_URL: ${RELAY_1_PUBLIC_URL:-http://localhost:8787}
+    ports: ["8788:8788"]
+
+  ohttp-relay:
+    <<: *common
+    environment:
+      ROLE: ohttp-relay
+      PORT: "8790"
+      # Local development only: lets the relay forward to http://localhost relayers.
+      OHTTP_ALLOW_LOCAL: ${OHTTP_ALLOW_LOCAL:-off}
+    ports: ["8790:8790"]
+
+volumes:
+  issuer-data:
