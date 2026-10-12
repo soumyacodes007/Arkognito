@@ -9,3 +9,5 @@ dist/
 .claude/
 /data/
 issuer-quota*.json
+
+.vercel

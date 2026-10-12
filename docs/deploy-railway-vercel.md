@@ -2,6 +2,14 @@
 
 Step-by-step for putting Arkognito online so anyone can try the demo from a link. About 30 minutes.
 
+Public demo: [Sketch App](https://arkognito.vercel.app),
+[observer view](https://arkognito.vercel.app/observer.html), and
+[private sketches](https://arkognito.vercel.app/sketch-private.html).
+
+Live relayer health checks:
+[relay-1](https://relay-1-production-80f5.up.railway.app/healthz) and
+[relay-2](https://relay-2-production-6f0f.up.railway.app/healthz).
+
 What you will end up with:
 
 | Piece | Where | What it does |
@@ -116,13 +124,15 @@ it can verify. Check `/healthz` shows `"targets": 2` after a minute.
 2. Leave **Root Directory** as the repository root (the demo builds the SDK from source). The
    repo's `vercel.json` sets everything else: install `npm ci`, build `npm run build -w arkognito-demo`,
    output `apps/demo/dist`.
-3. **Environment variables: none.** Node version: 22 (Project Settings → General, if it does not
-   pick it from `package.json`).
+3. **Environment variables: none.** Node version: 22, pinned by `engines.node: "22.x"` in the
+   root `package.json`. A range such as `>=22` overrides Vercel's project setting and selects
+   the newest available major version.
 4. **Deploy**. Open the site:
    - `/observer.html` loads data straight from Arkiv (works even before the relayers are up).
    - `/sketch-private.html` → Connect MetaMask. MetaMask asks to add the Tiramisu network, then for
-     three signatures (two for the key, one for tokens). Draw, save: about 20–30 s later the sketch
-     shows under "My sketches".
+     three signatures (two for the key, one for tokens). Newly issued tokens must age for 60 s
+     before use, so the first private save can take about 90 s. Once tokens are old enough,
+     a save usually takes about 20–30 s and appears under "My sketches".
 
 ## 5. Check it end to end
 
@@ -143,5 +153,6 @@ it can verify. Check `/healthz` shows `"targets": 2` after a minute.
 | `nonce too low`, `replacement transaction` or `stale key prediction` repeating in logs | The same wallet is also running somewhere else. Stop the other copy. |
 | `LOW BALANCE` in logs | Fund that relayer's address (shown on `/healthz`) from the faucet or another wallet. |
 | Saves take about 60 s | `MAX_WAIT_MS` not set; it defaults to 60000. |
+| First private save takes about 90 s even with `MAX_WAIT_MS=20000` | New tokens have a 60 s minimum age before redemption, followed by the batch wait and transaction. Later saves use already-aged tokens. |
 
 The full configuration reference and operations notes are in [self-hosting.md](self-hosting.md).
