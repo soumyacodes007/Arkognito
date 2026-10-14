@@ -3,21 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sketch, public</title>
+  <title>Public app · Arkognito</title>
+  <meta name="description" content="Arkiv's MetaMask Sketch App as the tutorial writes it.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <main>
-    <header>
-      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
-      <h1>Sketch App (public)</h1>
-      <p class="muted">Arkiv's MetaMask tutorial on SDK 0.8. Your wallet creates and owns every sketch, and pays the gas.</p>
-    </header>
+    <div class="page-head">
+      <div class="page-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <h1>Sketch App, public</h1>
+      <p class="lede">Arkiv's MetaMask tutorial on SDK 0.8. Your wallet creates, owns and pays for every sketch, so anyone can list everything you have saved.</p>
+      <dl class="props"><dt>Creator</dt><dd><span class="tag">Your wallet</span></dd><dt>Owner</dt><dd><span class="tag err">Your wallet, every time</span></dd><dt>Wallet prompts</dt><dd><span class="tag">1 transaction per save</span></dd><dt>Gas</dt><dd><span class="tag">Paid by you</span></dd></dl>
+    </div>
     <div id="app"></div>
   </main>
   <script type="module">
+    import { mountChrome } from "/src/layout.ts"
     import { mountSketchApp } from "/src/sketch-ui.ts"
     import { openStore } from "/src/store-public.ts"
+    mountChrome("public", "Sketch App · public")
     mountSketchApp(document.getElementById("app"), openStore, "public")
   </script>
 </body>

@@ -3,20 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Observer view</title>
+  <title>Observer · Arkognito</title>
+  <meta name="description" content="What anyone reading Arkiv can see, with and without Arkognito.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <main>
-    <header>
-      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
+    <div class="page-head">
+      <div class="page-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
       <h1>What an observer sees</h1>
-      <p class="muted">Everything below is read straight from Arkiv with no wallet: the same data anyone can query.</p>
-    </header>
+      <p class="lede">Read straight from Arkiv with no wallet: the same data anyone can query. Both versions of the Sketch App write to the same project.</p>
+      
+    </div>
     <div id="app"></div>
   </main>
   <script type="module">
+    import { mountChrome } from "/src/layout.ts"
     import { mountObserver } from "/src/observer.ts"
+    mountChrome("observer", "Observer view")
     mountObserver(document.getElementById("app"))
   </script>
 </body>

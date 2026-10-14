@@ -3,21 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Arkognito demo</title>
+  <title>Arkognito · private ownership for Arkiv</title>
+  <meta name="description" content="Records stay owned by you, but nobody can tell which records belong to the same person.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <main>
-    <header>
-      <h1>Arkognito: unlinkable ownership for Arkiv</h1>
-      <p class="muted">Records stay owned by you, but nobody can tell which records belong to the same person. Tiramisu testnet; all data is synthetic.</p>
-    </header>
-    <div class="links">
-      <a href="/sketch-public.html"><div class="card"><h2>1. Sketch App, public</h2><p class="muted">Draw and save. Your wallet owns every sketch, so one owner query finds them all.</p></div></a>
-      <a href="/sketch-private.html"><div class="card"><h2>2. Sketch App, private</h2><p class="muted">Same app, 3 lines changed. Your wallet owns nothing; you still see all your sketches.</p></div></a>
-      <a href="/observer.html"><div class="card"><h2>3. Observer view</h2><p class="muted">What anyone reading Arkiv can see, before and after.</p></div></a>
-      <a href="/determinism.html"><div class="card"><h2>4. Wallet check</h2><p class="muted">Does your wallet sign the Arkognito key message the same way twice?</p></div></a>
-    </div>
+    <div id="app"></div>
   </main>
+  <script type="module">
+    import { mountChrome } from "/src/layout.ts"
+    import { mountHome } from "/src/home.ts"
+    mountChrome("home")
+    mountHome(document.getElementById("app"))
+  </script>
 </body>
 </html>

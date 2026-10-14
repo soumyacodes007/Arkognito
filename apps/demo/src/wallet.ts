@@ -6,7 +6,7 @@ import "viem/window"
 /** Both versions of the Sketch App write to the same project, so the observer can compare them. */
 export const PROJECT = "arkognito-demo-sketch"
 
-export const EXPLORER = "https://indexer.tiramisu.db-chain.testnet.arkiv.network"
+export const EXPLORER = "https://tiramisu.explorer.arkiv.network"
 
 async function switchToTiramisu() {
   if (!window.ethereum) throw new Error("MetaMask is not installed")

@@ -3,21 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sketch, private</title>
+  <title>Private app · Arkognito</title>
+  <meta name="description" content="The same Sketch App made private with Arkognito.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
   <main>
-    <header>
-      <nav><a href="/">Arkognito demo</a><a href="/sketch-public.html">Sketch (public)</a><a href="/sketch-private.html">Sketch (private)</a><a href="/observer.html">Observer view</a><a href="/determinism.html">Wallet check</a></nav>
-      <h1>Sketch App (private, with Arkognito)</h1>
-      <p class="muted">Same app, 3 lines changed. Each sketch gets a one-time owner; a shared relayer writes it in a shuffled batch and pays the gas.</p>
-    </header>
+    <div class="page-head">
+      <div class="page-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <h1>Sketch App, private</h1>
+      <p class="lede">The same app with 3 lines changed. A shared relayer writes each sketch in a shuffled batch and hands it to a one-time owner. You still see all of yours.</p>
+      <dl class="props"><dt>Creator</dt><dd><span class="tag">Shared relayer</span></dd><dt>Owner</dt><dd><span class="tag ok">New address per sketch</span></dd><dt>Wallet prompts</dt><dd><span class="tag">1 signature at connect</span> <span class="faint">(2 the first time on a device)</span></dd><dt>Gas</dt><dd><span class="tag ok">None from you</span></dd></dl>
+    </div>
     <div id="app"></div>
   </main>
   <script type="module">
+    import { mountChrome } from "/src/layout.ts"
     import { mountSketchApp } from "/src/sketch-ui.ts"
     import { openStore } from "/src/store-private.ts"
+    mountChrome("private", "Sketch App · private")
     mountSketchApp(document.getElementById("app"), openStore, "private")
   </script>
 </body>
