@@ -6,6 +6,7 @@ import type { Address, Hex } from "viem"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import { type ArkivClients, type WriteQueue, withRetry } from "./arkiv"
 import type { EvilMode } from "./config"
+import { coverFor } from "./cover"
 
 export type BatchItem = {
   id: string
@@ -21,6 +22,10 @@ export type BatchItem = {
   /** Smallest batch this record may be written in (B2), and when to give up waiting for one. */
   minAnonymity?: number
   holdUntil?: number
+  /** Written for someone else: the envelope is signed by a key other than `owner` (inbox.ts). */
+  inbox?: boolean
+  /** Added by the relayer to fill a small batch (B5). Nobody is waiting for it. */
+  cover?: boolean
 }
 
 export type BatchHooks = {
@@ -33,6 +38,8 @@ export type BatcherOptions = {
   maxBatch: number
   maxWaitMs: number
   minIntervalBlocks: number
+  /** Fill batches smaller than this with cover records (B5). 0 turns cover off. */
+  coverMinBatch?: number
   evil: EvilMode
   log: (msg: string) => void
 }
@@ -138,6 +145,8 @@ export class Batcher {
       batch = keep
     }
     if (batch.length === 0) return
+    const cover = this.opts.coverMinBatch ? await coverFor(batch, this.opts.coverMinBatch) : []
+    if (cover.length) batch = shuffle([...batch, ...cover])
 
     const ownerFor = (it: BatchItem): Address =>
       this.opts.evil === "wrong-owner" ? privateKeyToAccount(generatePrivateKey()).address : it.owner
@@ -179,16 +188,19 @@ export class Batcher {
           this.opts.log(`ghost: wrote ${batch.length} record(s) but will never say so`)
           return
         }
-        batch.forEach((it, i) =>
+        const covers = batch.filter((it) => it.cover).length
+        batch.forEach((it, i) => {
+          if (it.cover) return
           this.#set(it.id, {
             state: "written",
             entityKey: res.createdEntities[i] as Hex,
             txHash: res.txHash,
             batchSize: batch.length,
+            cover: covers || undefined,
             block: receipt.blockNumber.toString(),
-          }),
-        )
-        this.opts.log(`batch ${this.batches}: ${batch.length} record(s) + ${side.length} marker(s) in ${Date.now() - t0} ms, tx ${res.txHash}`)
+          })
+        })
+        this.opts.log(`batch ${this.batches}: ${batch.length} record(s)${covers ? ` (${covers} cover)` : ""} + ${side.length} marker(s) in ${Date.now() - t0} ms, tx ${res.txHash}`)
         return
       } catch (e) {
         if (attempt < 4 && isStalePrediction(e)) {
@@ -204,7 +216,7 @@ export class Batcher {
           await this.#send(batch.slice(mid), ownerFor, envelopeFor)
           return
         }
-        this.#set(batch[0].id, { state: "failed", error: msg })
+        if (!batch[0].cover) this.#set(batch[0].id, { state: "failed", error: msg })
         this.opts.log(`record failed: ${msg}`)
         return
       }

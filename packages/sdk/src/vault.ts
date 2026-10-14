@@ -6,10 +6,11 @@ import type { AttributeInputs, Attributes } from "@arkiv-network/sdk"
 import type { Address, Hex } from "viem"
 
 /**
- * Which derived key. Records get a fresh random 15-byte id each (no counters, so nothing can be
+ * Which derived key. Inbox refs name a record someone else wrote for you (id = x(R) from its tag).
+ * Records get a fresh random 15-byte id each (no counters, so nothing can be
  * reused after expiry or by a second device). A scope's id is a hash of its name.
  */
-export type KeyRef = { kind: "record" | "scope"; id: Hex }
+export type KeyRef = { kind: "record" | "scope" | "inbox"; id: Hex }
 
 /** The envelope fields a record signature covers (see envelope.ts). */
 export type EnvelopeBody = { app: string; ct: string; exp: number; enc: 0 | 1; data: string }
@@ -50,6 +51,12 @@ export interface Vault {
   issuerIdentity(): Promise<Address>
   /** Signs a token-issuance request with the issuer identity (EIP-191 over `issuanceMessage`). */
   signIssuance(body: IssuanceBody): Promise<Hex>
+  /** Your inbox address: share it so others can write records only you own and can read (inbox.ts). */
+  inboxAddress(): Promise<string>
+  /** Trial-opens tags as inbox tags: for each, its inbox key ref if it was written for you, else null. */
+  openInbox(tags: string[]): Promise<(KeyRef | null)[]>
+  /** Who must have signed this record's envelope: the owner, or for an inbox record the sender's derived key. */
+  envelopeSignerOf(ref: KeyRef): Promise<Address>
 }
 
 /** The fields an issuance request signs (see issuance.ts). */

@@ -19,7 +19,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "build": "npm run build -w arkognito",
-    "test": "node --conditions=arkognito-source --import tsx --test packages/sdk/test/unit.test.ts",
+    "test": "node --conditions=arkognito-source --import tsx --test packages/sdk/test/unit.test.ts packages/sdk/test/privacy.test.ts packages/relayer/test/cover.test.ts",
     "test:phase2": "tsx --conditions=arkognito-source tests/phase2.ts",
     "test:phase3": "tsx --conditions=arkognito-source tests/phase3.ts",
     "test:phase4": "tsx --conditions=arkognito-source tests/phase4.ts",
@@ -31,6 +31,8 @@
     "dev:demo": "npm run dev -w arkognito-demo",
     "test:edge": "tsx --conditions=arkognito-source tests/edge-cases.ts",
     "test:popup": "tsx --conditions=arkognito-source tests/one-popup-e2e.ts",
+    "test:privacy": "tsx --conditions=arkognito-source tests/privacy-upgrades.ts",
+    "test:passkey": "tsx --conditions=arkognito-source tests/browser-passkey.ts",
     "demo:crowd": "tsx --conditions=arkognito-source scripts/demo-crowd.ts",
     "ohttp-relay": "tsx --conditions=arkognito-source packages/relayer/src/start.ts ohttp-relay",
     "setup": "tsx --conditions=arkognito-source scripts/setup.ts"

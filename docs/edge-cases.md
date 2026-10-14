@@ -8,7 +8,8 @@ status and the test that shows it.
 - **Inherent**: no code fixes it; documented so builders and users can decide.
 
 Tests: `unit` = `npm test`, `p2`–`p5` = `npm run test:phaseN`, `edge` = `npm run test:edge`,
-`issuer` = `npm run test:issuer`, `browser` = `apps/demo/test-worker-vault.html`.
+`issuer` = `npm run test:issuer`, `pu` = `npm run test:privacy`, `browser` = `apps/demo/test-worker-vault.html`
+and `npm run test:passkey` (Chrome with a virtual WebAuthn authenticator).
 
 ## Network: who sees your IP
 
@@ -26,7 +27,7 @@ Tests: `unit` = `npm test`, `p2`–`p5` = `npm run test:phaseN`, `edge` = `npm r
 
 | # | Case | Status | How | Test |
 | --- | --- | --- | --- | --- |
-| D1 | `myEntities()` asking for "owner in [S1, S2…]" reveals your address set | **Solved** | The client downloads the app's (key, owner, tag) list for everyone, opens its own tags locally, and fetches only whole batches, plus 2 random cover batches. | edge (a recording RPC proxy: no read names a key or owner of yours) |
+| D1 | `myEntities()` asking for "owner in [S1, S2…]" reveals your address set | **Solved** | The client downloads the app's (key, owner, tag) list for everyone and opens its own tags locally. Apps with up to 500 records (`fetchAllUnder`) are then downloaded whole, so the read says nothing at all; bigger apps fetch whole batches plus 2 random cover batches. | edge, pu (a recording RPC proxy: no read names a key, owner, block or batch of yours) |
 | N4 | Reading your record back right after writing it (`getEntity(key)`) told the RPC which record is yours | **Solved** | The post-write check fetches the whole batch by block and creator, never one key. | edge |
 | N5 | Paging breaks when a block lands mid page-through (cursor tied to its block) | **Solved** | Every page-through is pinned with `atBlock(head)`. | p2 (200+ records) |
 | D2 | Large apps make the download slow | **Reduced** | The list carries no payloads; payloads come per batch. Still linear in the app's record count. | — |
@@ -40,7 +41,8 @@ Tests: `unit` = `npm test`, `p2`–`p5` = `npm run test:phaseN`, `edge` = `npm r
 | K8 | Gaps in counters hide records beyond a gap limit | **Solved** | Same: there is no gap limit to fall off. | edge (second device finds everything) |
 | N7 | Tags themselves as a fingerprint | **Solved** | Every tag is 44 bytes (59 chars) for records and scopes alike, with a fresh IV each time. | unit, edge |
 | K1 | Wallet signs non-deterministically | **Solved** | Signs twice the first time a device sees the wallet for an app and stores a 16-byte fingerprint; later connects sign once and compare. Refuses on mismatch, offers random-root mode with a recovery code. | unit, browser |
-| K2 | Smart-contract wallets | **Reduced** | Detected and refused with a clear error (account has code). Not supported in v1. | — |
+| K2 | Smart-contract wallets | **Solved** with a passkey | Detected and refused for signature mode (account has code). Such users, and anyone without a wallet, can sign in with a passkey instead: the WebAuthn PRF extension gives a stable secret per passkey and app; creating it returns a recovery code. | unit, browser (Chrome virtual authenticator with PRF), pu |
+| K9 | Passkey deleted or not synced to a new device | **Reduced** | The PRF secret is bound to the passkey, so the keys go with it. Creating a passkey root always returns the recovery code, which restores the same keys. | unit, browser |
 | K3 | Phishing site asks for the same signature | **Reduced** | EIP-712 with a fixed purpose, app and chain id; the wallet shows the requesting site. A user who signs it anyway on a phishing site loses unlinkability for that app. | — |
 | K4 | The derivation signature leaks | **Inherent** | Past records become linkable. Rotate to a new purpose for future records. | — |
 | K5 | Lost wallet | **Inherent** | Records stay on Arkiv but cannot be found or proven. Random-root mode has a recovery code. | unit |
@@ -74,7 +76,9 @@ Tests: `unit` = `npm test`, `p2`–`p5` = `npm run test:phaseN`, `edge` = `npm r
 | B4 | One user's records in the same batch | **Solved** | One write in flight per client and per app across tabs. | p3 |
 | N13 | Spent-token markers ordered like the records they paid for | **Solved** | Markers are shuffled separately from records. | — (code) |
 | N14 | One bad record reverts everyone's batch | **Solved** | Strict validation before queueing; a failed batch is split in halves and retried. | — (code; validation in edge) |
-| B3 | Decoys to pad small batches | Out of scope | Decoys would pollute public app data. `minAnonymity` is the honest alternative. | — |
+| B3 | Decoys to pad small batches | See B5 | Cover records are now available for encrypted records; they add records that open for nobody, so app listings grow. | — |
+| B5 | A lone writer in a quiet hour | **Solved** for encrypted records, opt-in | `COVER_MIN_BATCH=m`: the relayer fills a small batch with cover records copied from a real encrypted one (same size, attributes, expiry; random ciphertext and tag; own owner and signature; own spent marker). Outsiders cannot tell them apart. Plaintext gets none. Costs relayer gas; the client is told how many were cover. | unit, pu (5 records, one size, 5 owners, 5 markers on chain) |
+| S1 | Someone needs to write a record *for* you | **Solved** | Inbox records: share your inbox address; `sendTo` makes a one-time owner only you control, encrypted to you, found by your `myEntities()` with `inbox: true`. An inbox record is recognisable as one (its signer is not its owner), not who it is for. | unit, pu |
 
 ## Content fingerprinting
 

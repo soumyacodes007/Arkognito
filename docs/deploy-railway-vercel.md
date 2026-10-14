@@ -77,6 +77,9 @@ Why some of these:
   `ISSUER_QUOTA_FILE`; quotas then reset on each restart, which is fine for a demo.)
 - `MAX_WAIT_MS=20000`: a private save waits at most 20 s for other users before writing (the
   default is 60 s). Good for a demo with few users; raise it for more privacy.
+- Optional `COVER_MIN_BATCH=5`: a lone encrypted save is padded to a batch of 5 with cover records
+  that nobody can tell from real ones. It costs gas for each cover record, and the demo's sketches are
+  not encrypted, so it only helps apps that write with `encrypt: true`.
 - `TOKENS_PER_DAY=20`: each wallet may write 20 private records a day (default 5).
 
 6. **Deploy**. When it is up, open `https://<relay-1 domain>/healthz`. You should see

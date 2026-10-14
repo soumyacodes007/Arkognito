@@ -17,10 +17,11 @@
   },
   "dependencies": {
     "@cloudflare/blindrsa-ts": "0.4.6",
-    "@noble/hashes": "2.4.0",
-    "@noble/ciphers": "2.4.0",
     "@hpke/core": "1.9.0",
-    "@hpke/dhkem-x25519": "1.8.0"
+    "@hpke/dhkem-x25519": "1.8.0",
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "1.9.1",
+    "@noble/hashes": "2.4.0"
   },
   "types": "./dist/index.d.ts",
   "files": [

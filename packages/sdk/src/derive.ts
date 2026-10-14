@@ -22,7 +22,19 @@ import { bytesToHex, hexToBytes, type Account, type Address, type Hex, type Publ
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts"
 import { TIRAMISU_CHAIN_ID } from "./constants.ts"
 import { envelopeDigest } from "./envelope.ts"
+import {
+  type InboxSecrets,
+  formatInboxAddress,
+  fromB64url as inboxB64,
+  inboxOwnerKey,
+  inboxSecrets,
+  openData,
+  pubOf,
+  sealData,
+  sharedFromTagX,
+} from "./inbox.ts"
 import { issuanceMessage } from "./issuance.ts"
+import { type PasskeyOptions, createPasskeySecret, getPasskeySecret } from "./passkey.ts"
 import { proofTypedData } from "./proof.ts"
 import type { EnvelopeBody, IssuanceBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
 
@@ -151,10 +163,11 @@ function signatureFingerprint(sig: Hex): string {
 export class KeyVault implements Vault {
   readonly #root: Uint8Array
   readonly app: string
-  readonly mode: "signature" | "random"
+  readonly mode: "signature" | "random" | "passkey"
   readonly #cache = new Map<string, PrivateKeyAccount>()
+  readonly #inbox = new Map<string, InboxSecrets>()
 
-  private constructor(root: Uint8Array, app: string, mode: "signature" | "random") {
+  private constructor(root: Uint8Array, app: string, mode: "signature" | "random" | "passkey") {
     this.#root = root
     this.app = app
     this.mode = mode
@@ -215,6 +228,27 @@ export class KeyVault implements Vault {
     return { vault: new KeyVault(root, app, "random"), recoveryCode: `arkognito1-${bytesToHex(root).slice(2)}` }
   }
 
+  /** Root from a passkey's PRF secret for this app (see passkey.ts). */
+  static fromPasskeySecret(secret: Uint8Array, app: string): KeyVault {
+    return new KeyVault(passkeyRoot(secret, app), app, "passkey")
+  }
+
+  /** The recovery code for a passkey root: restores the same keys with `fromRecoveryCode` if the passkey is lost. */
+  static passkeyRecoveryCode(secret: Uint8Array, app: string): string {
+    return `arkognito1-${bytesToHex(passkeyRoot(secret, app)).slice(2)}`
+  }
+
+  /** Signs in with an existing passkey: one biometric or PIN prompt, no wallet. */
+  static async fromPasskey(app: string, opts: PasskeyOptions = {}): Promise<KeyVault> {
+    return KeyVault.fromPasskeySecret((await getPasskeySecret(app, opts)).secret, app)
+  }
+
+  /** Creates a passkey and a root from it. Show the recovery code to the user once; it is the only backup. */
+  static async createPasskey(app: string, opts: PasskeyOptions = {}): Promise<{ vault: KeyVault; recoveryCode: string; credentialId: string }> {
+    const { secret, credentialId } = await createPasskeySecret(app, opts)
+    return { vault: KeyVault.fromPasskeySecret(secret, app), recoveryCode: KeyVault.passkeyRecoveryCode(secret, app), credentialId }
+  }
+
   static fromRecoveryCode(code: string, app: string): KeyVault {
     const m = code.trim().match(/^arkognito1-([0-9a-f]{64})$/i)
     if (!m) throw new Error("not a Arkognito recovery code")
@@ -224,6 +258,14 @@ export class KeyVault implements Vault {
   #account(ref: KeyRef): PrivateKeyAccount {
     checkRef(ref)
     const info = `${ref.kind}/${ref.id.toLowerCase()}`
+    if (ref.kind === "inbox") {
+      let acct = this.#cache.get(info)
+      if (!acct) {
+        acct = privateKeyToAccount(inboxOwnerKey(this.#inboxKey("spend"), this.#inboxSecrets(ref)))
+        this.#cache.set(info, acct)
+      }
+      return acct
+    }
     let acct = this.#cache.get(info)
     if (!acct) {
       acct = privateKeyToAccount(childPrivateKey(this.#root, info))
@@ -238,6 +280,7 @@ export class KeyVault implements Vault {
 
   #dataKey(ref: KeyRef): Uint8Array {
     checkRef(ref)
+    if (ref.kind === "inbox") return this.#inboxSecrets(ref).dataKey
     return hkdf(sha256, this.#root, undefined, enc.encode(`arkognito/data/v1/${ref.kind}/${ref.id.toLowerCase()}`), 32)
   }
 
@@ -312,13 +355,58 @@ export class KeyVault implements Vault {
   }
 
   async encrypt(ref: KeyRef, data: Uint8Array): Promise<Uint8Array> {
-    const iv = crypto.getRandomValues(new Uint8Array(12))
-    return concat(iv, gcm(this.#dataKey(ref), iv).encrypt(data))
+    return sealData(this.#dataKey(ref), data)
   }
 
   async decrypt(ref: KeyRef, data: Uint8Array): Promise<Uint8Array> {
-    if (data.length < 28) throw new Error("ciphertext too short")
-    return gcm(this.#dataKey(ref), data.subarray(0, 12)).decrypt(data.subarray(12))
+    return openData(this.#dataKey(ref), data)
+  }
+
+  // ---- inbox: records others write for you (inbox.ts) -----------------------------------------
+
+  /** Inbox keys sit under their own labels, outside the record/ and scope/ namespaces. */
+  #inboxKey(which: "spend" | "view"): bigint {
+    return BigInt(childPrivateKey(this.#root, `identity/inbox-${which}/v1`))
+  }
+
+  #inboxSecrets(ref: KeyRef): InboxSecrets {
+    const id = ref.id.toLowerCase()
+    let s = this.#inbox.get(id)
+    if (!s) {
+      const shared = sharedFromTagX(hexToBytes(ref.id), this.#inboxKey("view"))
+      if (!shared) throw new Error("bad key ref")
+      s = inboxSecrets(shared, this.app)
+      this.#inbox.set(id, s)
+    }
+    return s
+  }
+
+  async inboxAddress(): Promise<string> {
+    return formatInboxAddress(pubOf(this.#inboxKey("spend")), pubOf(this.#inboxKey("view")))
+  }
+
+  async openInbox(tags: string[]): Promise<(KeyRef | null)[]> {
+    const view = this.#inboxKey("view")
+    return tags.map((t) => {
+      try {
+        const raw = inboxB64(t)
+        if (raw.length !== TAG_BYTES) return null
+        const shared = sharedFromTagX(raw.subarray(0, 32), view)
+        if (!shared) return null
+        const sec = inboxSecrets(shared, this.app)
+        if (sec.viewTag !== raw[32]) return null
+        const id = bytesToHex(raw.subarray(0, 32))
+        this.#inbox.set(id, sec)
+        return { kind: "inbox", id } as KeyRef
+      } catch {
+        return null
+      }
+    })
+  }
+
+  async envelopeSignerOf(ref: KeyRef): Promise<Address> {
+    if (ref.kind !== "inbox") return this.addressOf(ref)
+    return privateKeyToAccount(this.#inboxSecrets(ref).signKey).address
   }
 }
 
@@ -332,9 +420,15 @@ export function scopeRef(name: string): KeyRef {
 }
 
 function checkRef(ref: KeyRef) {
-  if ((ref?.kind !== "record" && ref?.kind !== "scope") || !/^0x[0-9a-fA-F]{30}$/.test(ref.id)) {
-    throw new Error("bad key ref")
-  }
+  const ok =
+    ((ref?.kind === "record" || ref?.kind === "scope") && /^0x[0-9a-fA-F]{30}$/.test(ref.id)) ||
+    (ref?.kind === "inbox" && /^0x[0-9a-fA-F]{64}$/.test(ref.id))
+  if (!ok) throw new Error("bad key ref")
+}
+
+function passkeyRoot(secret: Uint8Array, app: string): Uint8Array {
+  if (!(secret instanceof Uint8Array) || secret.length < 32) throw new Error("passkey secret must be at least 32 bytes")
+  return hkdf(sha256, secret, undefined, enc.encode(`arkognito/root/v1/passkey/${app}`), 32)
 }
 
 function concat(a: Uint8Array, b: Uint8Array) {

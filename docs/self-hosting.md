@@ -104,6 +104,7 @@ Relayer:
 | `RELAYER_PUBLIC_URL` | `http://localhost:$PORT` | URL announced in the heartbeat entity |
 | `PORT` | 8787 | |
 | `MIN_BATCH` / `MAX_WAIT_MS` / `MIN_INTERVAL_BLOCKS` / `MAX_BATCH` | 5 / 60000 / 5 / 40 | Batching: privacy against latency |
+| `COVER_MIN_BATCH` | 0 (off) | Fill batches smaller than this with cover records copied from a real encrypted record. Costs gas for each cover record and its spent marker |
 | `REQUIRE_TOKENS` | off | Require blind rate-limit tokens |
 | `ISSUER` | off | Also run the issuer in this service |
 | `ISSUER_WALLET_PRIVATE_KEY`, `ISSUER_RSA_SEED` | — | With `ISSUER=on` |

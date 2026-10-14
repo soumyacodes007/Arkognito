@@ -7,6 +7,7 @@ export type VaultRequest =
   | { id: number; op: "fromSignature"; signature: `0x${string}`; app: string }
   | { id: number; op: "fromRecoveryCode"; code: string; app: string }
   | { id: number; op: "random"; app: string }
+  | { id: number; op: "fromPasskeySecret"; secret: Uint8Array; app: string; recovery: boolean }
   | { id: number; op: "newRecord" }
   | { id: number; op: "scopeRecord"; name: string }
   | { id: number; op: "openTags"; tags: string[] }
@@ -17,6 +18,9 @@ export type VaultRequest =
   | { id: number; op: "decrypt"; ref: KeyRef; data: Uint8Array }
   | { id: number; op: "issuerIdentity" }
   | { id: number; op: "signIssuance"; body: IssuanceBody }
+  | { id: number; op: "inboxAddress" }
+  | { id: number; op: "openInbox"; tags: string[] }
+  | { id: number; op: "envelopeSignerOf"; ref: KeyRef }
 
 let vault: KeyVault | undefined
 
@@ -33,6 +37,10 @@ async function handle(req: VaultRequest): Promise<unknown> {
     case "fromRecoveryCode":
       vault = KeyVault.fromRecoveryCode(req.code, req.app)
       return null
+    case "fromPasskeySecret":
+      vault = KeyVault.fromPasskeySecret(req.secret, req.app)
+      // Only when the passkey is first created: the user must save this code.
+      return req.recovery ? KeyVault.passkeyRecoveryCode(req.secret, req.app) : null
     case "random": {
       const r = KeyVault.random(req.app)
       vault = r.vault
@@ -59,6 +67,12 @@ async function handle(req: VaultRequest): Promise<unknown> {
       return need().issuerIdentity()
     case "signIssuance":
       return need().signIssuance(req.body)
+    case "inboxAddress":
+      return need().inboxAddress()
+    case "openInbox":
+      return need().openInbox(req.tags)
+    case "envelopeSignerOf":
+      return need().envelopeSignerOf(req.ref)
   }
 }
 

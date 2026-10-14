@@ -36,10 +36,13 @@ const same = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toL
  * Checks one entity is an honest Arkognito record: the envelope signature recovers to $owner over the
  * on-chain attributes, the expiry matches the signed bucket, and (optionally) the app and creator match.
  * Needs an entity fetched with key, owner, creator, payload, attributes, createdAt and expiresAt.
+ *
+ * An inbox record (inbox.ts) is signed by a key derived for its recipient, not by its owner: its
+ * recipient passes that address as `signer`.
  */
 export async function verifyRecord(
   entity: RecordEntity,
-  expect: { app?: string; relayers?: readonly Address[]; owner?: Address } = {},
+  expect: { app?: string; relayers?: readonly Address[]; owner?: Address; signer?: Address } = {},
 ): Promise<VerifyResult> {
   if (!entity.key || !entity.owner || !entity.creator || !entity.payload) {
     return { ok: false, reason: "entity is missing key, owner, creator or payload" }
@@ -63,8 +66,13 @@ export async function verifyRecord(
   } catch {
     return { ok: false, reason: "envelope signature is malformed" }
   }
-  if (!same(signer, entity.owner)) {
-    return { ok: false, reason: "envelope signature does not match $owner (content, attributes or expiry were changed)" }
+  if (!same(signer, expect.signer ?? entity.owner)) {
+    return {
+      ok: false,
+      reason: expect.signer
+        ? "envelope signature does not match the inbox sender key (content, attributes or expiry were changed)"
+        : "envelope signature does not match $owner (content, attributes or expiry were changed)",
+    }
   }
   if (entity.createdAt !== undefined && entity.expiresAt !== undefined) {
     const lifetime = entity.expiresAt - entity.createdAt
@@ -164,5 +172,29 @@ export async function fetchBatches(
       cursor = page.cursor
     } while (cursor)
   }
+  return out
+}
+
+/**
+ * Every record of one app project, payloads included, as of one block. For small apps this is the
+ * private way to read: the RPC provider sees the whole app downloaded, so it learns nothing about
+ * which records are yours (better than fetching your batches plus cover batches).
+ */
+export async function fetchProject(client: ArkivReader, project: string, atBlock?: bigint): Promise<FullRecord[]> {
+  const q = eq("project", project).toString()
+  const out: FullRecord[] = []
+  let cursor: string | undefined
+  let block = atBlock
+  do {
+    const page = await client.query(q, {
+      select: { key: true, owner: true, creator: true, payload: true, attributes: true, createdAt: true, expiresAt: true },
+      limit: 200,
+      cursor,
+      atBlock: block,
+    })
+    block = page.blockNumber
+    out.push(...(page.entities as unknown as FullRecord[]))
+    cursor = page.cursor
+  } while (cursor)
   return out
 }

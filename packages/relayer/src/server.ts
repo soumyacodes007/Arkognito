@@ -63,7 +63,7 @@ function send(res: ServerResponse, status: number, body: unknown) {
 
 export async function validateSubmission(body: SubmitRequest, relayer: Address, limits: { maxMinAnonymity: number; maxHoldMs: number }): Promise<BatchItem> {
   if (!body || typeof body !== "object") throw new HttpError(400, "missing body")
-  const { app, owner, envelope, attributes, expSeconds, minAnonymity, maxHoldMs } = body
+  const { app, owner, envelope, attributes, expSeconds, minAnonymity, maxHoldMs, inbox } = body
   if (typeof app !== "string" || !app) throw new HttpError(400, "app is required")
   if (typeof owner !== "string" || !isAddress(owner) || owner === zeroAddress) throw new HttpError(400, "owner must be an address")
   if (owner.toLowerCase() === relayer.toLowerCase()) throw new HttpError(400, "owner cannot be the relayer")
@@ -98,9 +98,17 @@ export async function validateSubmission(body: SubmitRequest, relayer: Address, 
     throw new HttpError(400, (e as Error).message)
   }
   if (env.app !== app || env.exp !== expSeconds) throw new HttpError(400, "envelope app/expiry do not match the request")
-  // Refuse junk early: only records the owner actually signed are worth gas.
-  const signer = await envelopeSigner(env, typed)
-  if (signer.toLowerCase() !== owner.toLowerCase()) throw new HttpError(400, "envelope is not signed by owner")
+  // Refuse junk early: only records the owner actually signed are worth gas. An inbox record is
+  // signed by a key derived for its recipient, which only the recipient can check.
+  let signer
+  try {
+    signer = await envelopeSigner(env, typed)
+  } catch {
+    throw new HttpError(400, "envelope signature is malformed")
+  }
+  if (inbox !== undefined && inbox !== true) throw new HttpError(400, "inbox must be true or absent")
+  if (!inbox && signer.toLowerCase() !== owner.toLowerCase()) throw new HttpError(400, "envelope is not signed by owner")
+  if (inbox && signer.toLowerCase() === owner.toLowerCase()) throw new HttpError(400, "an inbox record is not signed by its owner")
   const now = Date.now()
   return {
     id: crypto.randomUUID(),
@@ -109,6 +117,7 @@ export async function validateSubmission(body: SubmitRequest, relayer: Address, 
     attributes: typed,
     expSeconds,
     receivedAt: now,
+    inbox: inbox || undefined,
     minAnonymity: minAnonymity && minAnonymity > 1 ? minAnonymity : undefined,
     holdUntil: minAnonymity && minAnonymity > 1 ? now + Math.min(maxHoldMs ?? limits.maxHoldMs, limits.maxHoldMs) : undefined,
   }
@@ -142,7 +151,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
   const batcher = new Batcher(
     arkiv,
     writer,
-    { minBatch: cfg.minBatch, maxBatch: cfg.maxBatch, maxWaitMs: cfg.maxWaitMs, minIntervalBlocks: cfg.minIntervalBlocks, evil: cfg.evil, log },
+    { minBatch: cfg.minBatch, maxBatch: cfg.maxBatch, maxWaitMs: cfg.maxWaitMs, minIntervalBlocks: cfg.minIntervalBlocks, coverMinBatch: cfg.coverMinBatch, evil: cfg.evil, log },
     gate?.hooks,
   )
   const limiter = new RateLimiter(cfg.ratePerMinute)
@@ -163,6 +172,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
     maxMinAnonymity: cfg.maxMinAnonymity,
     maxHoldMs: cfg.maxHoldMs,
     ohttpKey: gateway?.publicKey,
+    coverMinBatch: cfg.coverMinBatch || undefined,
   })
 
   /** The API itself, shared by direct HTTP and by requests unwrapped from OHTTP. */
@@ -280,7 +290,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
       if (cfg.requireTokens) gate?.monitor?.start()
       if (cfg.heartbeat) await heartbeat.start(cfg.heartbeatEveryMs)
       await new Promise<void>((r) => server.listen(cfg.port, r))
-      log(`listening on :${cfg.port} as ${arkiv.address} (k=${cfg.minBatch}, maxWait=${cfg.maxWaitMs}ms, ohttp=${!!gateway}, evil=${cfg.evil})`)
+      log(`listening on :${cfg.port} as ${arkiv.address} (k=${cfg.minBatch}, maxWait=${cfg.maxWaitMs}ms, cover=${cfg.coverMinBatch || "off"}, ohttp=${!!gateway}, evil=${cfg.evil})`)
     },
     async close() {
       clearInterval(balanceTimer)

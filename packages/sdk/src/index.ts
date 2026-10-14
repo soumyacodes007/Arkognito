@@ -18,6 +18,10 @@ export type { EnvelopeBody, IssuanceBody, KeyRef, NewKey, ProofBody, Vault, Arko
 export { OhttpGateway, ohttpCall } from "./ohttp.ts"
 export type { InnerRequest, InnerResponse } from "./ohttp.ts"
 export { WorkerVault } from "./worker-vault.ts"
+export { INBOX_PREFIX, parseInboxAddress, sealInbox } from "./inbox.ts"
+export type { SealedInboxKey } from "./inbox.ts"
+export { PasskeyPrfUnsupportedError, createPasskeySecret, getPasskeySecret, passkeyPrfSalt } from "./passkey.ts"
+export type { PasskeyOptions } from "./passkey.ts"
 export {
   envelopeDigest,
   envelopeSigner,
@@ -34,7 +38,7 @@ export { assertNodeSafeNames, canonicalAttributes, fromWire, nameProblem, toWire
 export type { WireAttributes, WireValue } from "./attrs.ts"
 export { proofTypedData, signOwnershipProof, verifyOwnershipProof } from "./proof.ts"
 export type { OwnershipProof, ProofCheck } from "./proof.ts"
-export { fetchBatches, listApp, verifyRecord } from "./reader.ts"
+export { fetchBatches, fetchProject, listApp, verifyRecord } from "./reader.ts"
 export type { AppEntry, ArkivReader, FullRecord, RecordEntity, VerifiedRecord, VerifyResult } from "./reader.ts"
 export * from "./protocol.ts"
 export {

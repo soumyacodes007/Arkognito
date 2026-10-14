@@ -28,7 +28,13 @@ block time 2 s. Arkognito's own entities carry `project = "arkognito-7f3k"`. Att
 2. `root = HKDF-SHA256(ikm = signature bytes (65), salt = none, info = "arkognito/root/v1/" + app, L = 32)`.
    Random-root mode: `root` is 32 random bytes; recovery code `"arkognito1-" + hex(root)`.
 
-3. A key reference is `(kind, id)` with `kind ∈ {record, scope}` and a 15-byte `id`:
+   Passkey mode (no wallet): the WebAuthn PRF extension evaluated with
+   `salt = sha256("arkognito/passkey/v1|" + app)` returns a 32-byte `secret`, and
+   `root = HKDF-SHA256(secret, info = "arkognito/root/v1/passkey/" + app, L = 32)`. Creating the passkey
+   also returns the recovery code `"arkognito1-" + hex(root)`, since losing the passkey loses the keys.
+
+3. A key reference is `(kind, id)` with `kind ∈ {record, scope}` and a 15-byte `id`, or `kind = inbox`
+   with a 32-byte `id` (section 3a):
    - a record gets a fresh random `id` (no counters: nothing can be reused after records expire,
      and two devices cannot collide);
    - a scope's `id = sha256("arkognito/scope/" + name)[0..15]`, so all its records share one owner on purpose.
@@ -103,9 +109,39 @@ lifetime `exp` seconds.
 3. Fetch payloads for whole batches only: `project = … AND $createdAt = u64(<block>) AND $creator = addr(<relayer>)`
    for each batch holding a record of yours, plus 2 other batches at random as cover. Verify each record.
 
-After writing, a client confirms its record the same way (the whole batch, never one key). If a
-relayer fails to answer, the client looks for its own `vtag` in a fresh listing before retrying
-anywhere else, so a relayer that wrote and then crashed causes no duplicate.
+When the app has at most `fetchAllUnder` records (default 500), step 3 instead downloads every record
+of the project at one block, so the read says nothing about which records are yours.
+
+After writing, a client confirms its record the same way (the whole batch, never one key), reading
+again for up to 10 s if the RPC node has not caught up with the block yet. If a relayer fails to
+answer, the client looks for its own `vtag` in a fresh listing before retrying anywhere else, so a
+relayer that wrote and then crashed causes no duplicate.
+
+## 3a. Inbox records (send to user)
+
+A record someone else writes for you, owned by a one-time address only you control (stealth
+addresses on secp256k1, as in ERC-5564).
+
+```
+k_spend = key(root, "identity/inbox-spend/v1"), k_view = key(root, "identity/inbox-view/v1")   (section 1.4 reduction)
+inbox address = "arkognito-inbox1:" || hex(compressed K_spend) || hex(compressed K_view)
+
+sender:  r random, R = rG with even y (else r = n - r);  shared = x(r · K_view)
+         c      = scalar(shared, "arkognito/inbox/owner/v1|" + app)        owner = address(K_spend + cG)
+         k_sig  = scalar(shared, "arkognito/inbox/sign/v1|" + app)         signs the envelope
+         dataKey = HKDF(shared, "arkognito/inbox/data/v1|" + app, 32)      payload always encrypted
+         viewTag = HKDF(shared, "arkognito/inbox/viewtag/v1|" + app, 1)
+         vtag   = base64url(x(R) (32) || viewTag (1) || 11 random bytes)   44 bytes, like every tag
+recipient: for each tag that does not open as a normal tag, shared = x(k_view · R); skip unless the
+         view tag matches; the owner key is k_spend + c; verify the envelope against address(k_sig·G).
+scalar(ikm, info) = (HKDF-SHA256(ikm, info, 48) mod (n - 1)) + 1
+```
+
+The submission carries `inbox: true`; the relayer then requires a valid envelope signature that
+does **not** recover to `owner`, and a normal submission's signature must recover to `owner`. An
+inbox record is therefore recognisable as one, but not who it is for, who sent it or what it says.
+A tag's first 32 bytes are always a valid curve x-coordinate, where a normal tag's are only half the
+time: over many records this tells inbox tags apart as well, which the signature already does.
 
 ## 4. Relayer HTTP API
 
@@ -113,9 +149,9 @@ JSON bodies, open CORS. Relayers must not log request IPs.
 
 | Method | Path | Body / answer |
 | --- | --- | --- |
-| `GET` | `/v1/info` | `{ address, version: "arkognito-relayer/1", chainId, minBatch, maxWaitMs, minIntervalBlocks, tokensRequired, issuer?, issuerUrl?, maxMinAnonymity, maxHoldMs, ohttpKey? }` |
-| `POST` | `/v1/records` | `{ app, owner, envelope, attributes, expSeconds, token?, minAnonymity?, maxHoldMs? }` → `202 { id }` |
-| `GET` | `/v1/records/:id` | `{ id, state: "queued" \| "written" \| "failed", position?, entityKey?, txHash?, block?, batchSize?, error? }` |
+| `GET` | `/v1/info` | `{ address, version: "arkognito-relayer/1", chainId, minBatch, maxWaitMs, minIntervalBlocks, tokensRequired, issuer?, issuerUrl?, maxMinAnonymity, maxHoldMs, ohttpKey?, coverMinBatch? }` |
+| `POST` | `/v1/records` | `{ app, owner, envelope, attributes, expSeconds, token?, minAnonymity?, maxHoldMs?, inbox? }` → `202 { id }` |
+| `GET` | `/v1/records/:id` | `{ id, state: "queued" \| "written" \| "failed", position?, entityKey?, txHash?, block?, batchSize?, cover?, error? }` |
 | `POST` | `/v1/ohttp` | an encapsulated request (section 5) → an encapsulated response |
 | `GET` | `/healthz` | `{ ok, address, queue, batches, lastFlushBlock, heartbeat, lastBeat, balanceGlm, doubleSpendsDetected }` |
 
@@ -125,7 +161,7 @@ A relayer refuses (`400`) a submission unless: `owner` is an address other than 
 envelope is padded to a bucket; `expSeconds` is a bucket and equals `exp`; `app` equals the
 envelope's; every attribute name is valid; `project` is present; at most 32 attributes;
 `minAnonymity` (if given) is 1…`maxMinAnonymity` and `maxHoldMs` ≤ the relayer's; and the
-envelope signature recovers to `owner`. Tokens on: none → `402`, bad or spent → `403`. Tokens off:
+envelope signature recovers to `owner` (with `inbox: true`: is valid and recovers to anything else). Tokens on: none → `402`, bad or spent → `403`. Tokens off:
 more than `RATE_LIMIT_PER_MIN` requests a minute from one address → `429` (counted in memory only).
 Queue full → `503`.
 
@@ -140,7 +176,13 @@ Queue full → `503`.
   the predicted salts, and `ownershipChanges` giving record `i` to its `owner`.
 - One writer per relayer wallet. Stale prediction: predict again (up to 3 times). Any other failure:
   split the batch in halves and retry each.
-- `written` status carries `block` and `batchSize`.
+- Cover (optional, `COVER_MIN_BATCH = m`): a batch of fewer than `m` records is filled with cover
+  records. Each copies a random **encrypted** record of the batch: same app, attributes except
+  `vtag`, content type, expiry bucket and ciphertext length; random ciphertext, a random 44-byte
+  `vtag`, a fresh owner that signs it (or, copying an inbox record, a separate signing key), and with
+  tokens on a spent marker with a random token id. A batch of plaintext records gets no cover: random
+  bytes cannot pass for someone's plaintext.
+- `written` status carries `block`, `batchSize` (cover included) and `cover` (how many were cover).
 
 ### Client behaviour
 

@@ -33,6 +33,8 @@ export function loadConfig(overrides: Record<string, string | undefined> = {}) {
     maxBatch: num("MAX_BATCH", 40),
     maxWaitMs: num("MAX_WAIT_MS", 60_000),
     minIntervalBlocks: num("MIN_INTERVAL_BLOCKS", 5),
+    // B5: fill batches smaller than this with cover records (costs gas). 0 = off.
+    coverMinBatch: num("COVER_MIN_BATCH", 0),
     heartbeat: (env.HEARTBEAT ?? "on") !== "off",
     heartbeatEveryMs: num("HEARTBEAT_EVERY_MS", 120_000),
     lowBalanceGlm: num("LOW_BALANCE_GLM", 0.2),

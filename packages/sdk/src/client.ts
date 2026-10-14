@@ -6,13 +6,15 @@ import { assertNodeSafeNames, toWire } from "./attrs.ts"
 import { type CheckWarning, checkRarity, checkRecord } from "./check.ts"
 import { type DeterminismMode, type DeterminismStore, KeyVault, type SigningWallet, scopeRef } from "./derive.ts"
 import { heartbeatRelayers } from "./discovery.ts"
-import { expiryBucket, expirySeconds, fromBase64, sealEnvelope } from "./envelope.ts"
+import { envelopeDigest, expiryBucket, expirySeconds, fromBase64, sealEnvelope } from "./envelope.ts"
+import { sealInbox } from "./inbox.ts"
+import type { PasskeyOptions } from "./passkey.ts"
 import { type InnerResponse, ohttpCall } from "./ohttp.ts"
 import { type OwnershipProof, signOwnershipProof } from "./proof.ts"
 import type { InfoResponse, StatusResponse, SubmitRequest, TokenRedemption } from "./protocol.ts"
-import { type AppEntry, type ArkivReader, type FullRecord, type VerifiedRecord, fetchBatches, listApp, verifyRecord } from "./reader.ts"
+import { type AppEntry, type ArkivReader, type FullRecord, type VerifiedRecord, fetchBatches, fetchProject, listApp, verifyRecord } from "./reader.ts"
 import { type TokenStore, TokenWallet } from "./tokens.ts"
-import type { KeyRef, Vault } from "./vault.ts"
+import type { ArkognitoSigner, KeyRef, Vault } from "./vault.ts"
 import { WorkerVault } from "./worker-vault.ts"
 
 export type ArkognitoCreateParams = {
@@ -32,8 +34,10 @@ export type ArkognitoCreateResult = {
   owner: Address
   txHash?: Hex
   relayer: string
-  /** Records in the same batch, including this one (B2: "you were 1 of N"). */
+  /** Records in the same batch, including this one and any cover records (B2: "you were 1 of N"). */
   batchSize?: number
+  /** How many of `batchSize` were cover records added by the relayer (B5). Outsiders cannot tell which. */
+  cover?: number
   /** True when the relayer failed to answer but the record turned out to have landed (no duplicate written). */
   recovered?: boolean
   warnings: CheckWarning[]
@@ -57,9 +61,26 @@ export type PrivateClientOptions = {
   project?: string
   /** Relayer URLs. Omit to discover live relayers from their heartbeat entities on Arkiv (R8). */
   relayers?: string[]
-  /** Wallet that signs the derivation message once. Either this or `vault`. */
+  /** Wallet that signs the derivation message once. One of `wallet`, `passkey` or `vault`. */
   wallet?: SigningWallet
+  /**
+   * Sign in with an existing passkey instead of a wallet (WebAuthn PRF): one biometric or PIN prompt.
+   * Create the passkey first with `WorkerVault.createPasskey` (or `KeyVault.createPasskey`), which
+   * returns the recovery code to show the user.
+   */
+  passkey?: true | PasskeyOptions
   vault?: Vault
+  /**
+   * Also look for records others wrote to your inbox address (`sendTo`). Costs one elliptic-curve
+   * multiplication per record in the app when listing, so it is off by default.
+   */
+  inbox?: boolean
+  /**
+   * When the app has at most this many records, reading your records downloads all of them, so the
+   * RPC provider learns nothing about which are yours. Above it, your batches plus cover batches are
+   * fetched (D1). Default 500; 0 turns it off.
+   */
+  fetchAllUnder?: number
   /**
    * When to check that the wallet signs deterministically (K1). Default "first-use": two prompts
    * the first time this device sees the wallet for this app, one prompt afterwards.
@@ -135,13 +156,24 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
   const vault: Vault = opts.vault ?? (await openVault())
 
   async function openVault(): Promise<Vault> {
-    if (!opts.wallet) throw new ArkognitoError("pass either `wallet` or `vault`")
+    const browser = typeof window !== "undefined" && typeof Worker !== "undefined"
+    if (opts.passkey) {
+      const pk = opts.passkey === true ? {} : opts.passkey
+      if (opts.isolateKeys ?? browser) {
+        try {
+          return await WorkerVault.fromPasskey(app, { ...pk, worker: WorkerVault.spawn() })
+        } catch (e) {
+          if (!(e instanceof Error) || !/Worker/.test(e.message)) throw e
+        }
+      }
+      return KeyVault.fromPasskey(app, pk)
+    }
+    if (!opts.wallet) throw new ArkognitoError("pass `wallet`, `passkey` or `vault`")
     const derivation = {
       publicClient: reader as unknown as PublicClient,
       verifyDeterminism: opts.verifyDeterminism,
       determinismStore: opts.determinismStore,
     }
-    const browser = typeof window !== "undefined" && typeof Worker !== "undefined"
     if (opts.isolateKeys ?? browser) {
       let worker: Worker | undefined
       try {
@@ -242,6 +274,8 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
 
   // ---- the app's records, as of one block, without payloads (D1) ------------------------------
   let listing: { at: number; entries: AppEntry[] } | undefined
+  /** How the last read fetched payloads: the whole app, or batches plus cover. */
+  let lastRead: "all" | "batches" | undefined
   async function appIndex(maxAgeMs = 30_000): Promise<AppEntry[]> {
     if (!listing || Date.now() - listing.at > maxAgeMs) {
       listing = { at: Date.now(), entries: await listApp(reader, project, opts.trustedRelayersOnly ? relayerAddresses() : []) }
@@ -249,12 +283,21 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
     return listing.entries
   }
 
-  /** Full records for these entries, fetched as whole batches plus random cover batches. */
+  /**
+   * Full records for these entries. Small app: every record of it, so nothing says which are ours.
+   * Otherwise: whole batches plus random cover batches (D1).
+   */
   async function fetchCovered(mine: AppEntry[]): Promise<Map<string, FullRecord>> {
+    const all = listing?.entries ?? []
+    if (all.length > 0 && all.length <= (opts.fetchAllUnder ?? 500)) {
+      lastRead = "all"
+      const records = await fetchProject(reader, project)
+      return new Map(records.map((r) => [lower(r.key), r]))
+    }
+    lastRead = "batches"
     const key = (b: { block: bigint; creator: Address }) => `${b.block}|${lower(b.creator)}`
     const wanted = new Map<string, { block: bigint; creator: Address }>()
     for (const m of mine) wanted.set(key({ block: m.createdAt, creator: m.creator }), { block: m.createdAt, creator: m.creator })
-    const all = listing?.entries ?? []
     const others = [...new Map(all.map((e) => [key({ block: e.createdAt, creator: e.creator }), { block: e.createdAt, creator: e.creator }])).values()].filter(
       (b) => !wanted.has(key(b)),
     )
@@ -308,12 +351,12 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
   }
 
   /** Finds a record by its tag in a fresh listing and verifies it: used to confirm a write without naming the record. */
-  async function findOwn(tag: string, owner: Address): Promise<FullRecord | undefined> {
+  async function findOwn(tag: string, owner: Address, signer?: Address): Promise<FullRecord | undefined> {
     const entry = (await appIndex(0)).find((e) => e.tag === tag)
     if (!entry) return undefined
     const full = (await fetchCovered([entry])).get(lower(entry.key))
     if (!full) return undefined
-    const v = await verifyRecord(full, { app, owner })
+    const v = await verifyRecord(full, { app, owner, signer })
     return v.ok ? full : undefined
   }
 
@@ -336,62 +379,110 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
 
     return serial(async () => {
       const key = params.scope ? await vault.scopeRecord(params.scope) : await vault.newRecord()
-      const attributes: AttributeInputs = { ...params.attributes, project, vtag: key.tag }
-      try {
-        assertNodeSafeNames(attributes)
-      } catch (e) {
-        throw new ArkognitoError((e as Error).message)
-      }
       const signer = await vault.signer(key.ref)
       const payload = params.encrypt ? await vault.encrypt(key.ref, params.payload) : params.payload
-      const sealed = await sealEnvelope({ signer, app, payload, contentType: params.contentType, attributes, expSeconds, encrypted: params.encrypt })
-      const [lo, hi] = opts.delayMs ?? [0, 20_000]
-      await sleep(lo + Math.random() * Math.max(0, hi - lo))
-
-      const failures: string[] = []
-      const order = [...relayers.filter((r) => !r.bad && r.info), ...relayers.filter((r) => r.bad && r.info)]
-      if (order.length === 0) throw new ArkognitoError("no relayer is reachable")
-      const done = (entity: FullRecord, r: Relayer | undefined, s?: StatusResponse, recovered = false): ArkognitoCreateResult => {
-        if (listing) listing.entries.push({ key: entity.key, owner: entity.owner, creator: entity.creator, createdAt: entity.createdAt, attributes: entity.attributes, tag: key.tag })
-        return { entityKey: entity.key, owner: key.address, txHash: s?.txHash, relayer: r?.url ?? "", batchSize: s?.batchSize, recovered, warnings }
-      }
-      for (const r of order) {
-        try {
-          const token = await tokenSource?.take(app, r.info!)
-          const minAnonymity = opts.minAnonymity && opts.minAnonymity > 1 ? opts.minAnonymity : undefined
-          const status = await submitAndWait(r, {
-            app,
-            owner: key.address,
-            envelope: sealed.text,
-            attributes: toWire(attributes),
-            expSeconds,
-            token,
-            minAnonymity,
-            maxHoldMs: minAnonymity ? (opts.maxHoldMs ?? 10 * 60_000) : undefined,
-          })
-          if (status.state !== "written" || !status.entityKey || !status.block) {
-            // R4: the relayer may have written it and then failed to say so. Check before retrying elsewhere.
-            const landed = await findOwn(key.tag, key.address)
-            if (landed) return done(landed, undefined, undefined, true)
-            failures.push(`${r.url}: ${status.error ?? status.state}`)
-            continue
-          }
-          // R1/R2: trust nothing the relayer says. Read the whole batch back (never just our key) and verify.
-          const batch = await fetchBatches(reader, project, [{ block: BigInt(status.block), creator: r.info!.address }])
-          const entity = batch.find((e) => lower(e.key) === lower(status.entityKey!))
-          const v = entity ? await verifyRecord(entity, { app, owner: key.address, relayers: [r.info!.address] }) : { ok: false as const, reason: "record is not in the batch the relayer named" }
-          if (!v.ok) {
-            r.bad = true
-            failures.push(`${r.url} misbehaved: ${v.reason}`)
-            continue
-          }
-          return done(entity!, r, status)
-        } catch (e) {
-          failures.push(`${r.url}: ${(e as Error).message}`)
-        }
-      }
-      throw new ArkognitoError(`every relayer failed: ${failures.join(" | ")}`)
+      return submit({ owner: key.address, tag: key.tag, signer, payload, encrypted: !!params.encrypt, inbox: false }, params, expSeconds, warnings)
     })
+  }
+
+  /**
+   * Writes a record for someone else: owned by a one-time address only the holder of `inboxAddress`
+   * controls, readable only by them, and found by their `myEntities()` when they enable `inbox`.
+   * Always encrypted. You cannot read it back or prove ownership of it.
+   */
+  async function sendTo(inboxAddress: string, params: Omit<ArkognitoCreateParams, "scope" | "encrypt">): Promise<ArkognitoCreateResult> {
+    const warnings = [...check(params), ...(await rarity(params.attributes).catch(() => []))]
+    if (opts.strict && warnings.length) {
+      throw new ArkognitoError(`check() refused this record: ${warnings.map((w) => w.message).join("; ")}`)
+    }
+    const expSeconds = expiryBucket(expirySeconds(params.expires))
+    let sealedKey: ReturnType<typeof sealInbox>
+    try {
+      sealedKey = sealInbox(inboxAddress, app)
+    } catch (e) {
+      throw new ArkognitoError((e as Error).message)
+    }
+    const acct = sealedKey.envelopeSigner
+    const signer: ArkognitoSigner = {
+      address: acct.address,
+      signEnvelope: (body, attributes) => acct.signMessage({ message: { raw: envelopeDigest(body, attributes) } }),
+      signProof: () => Promise.reject(new ArkognitoError("an inbox record's sender cannot prove ownership")),
+    }
+    return serial(() =>
+      submit({ owner: sealedKey.owner, tag: sealedKey.tag, signer, payload: sealedKey.encrypt(params.payload), encrypted: true, inbox: true }, params, expSeconds, warnings),
+    )
+  }
+
+  type Prepared = { owner: Address; tag: string; signer: ArkognitoSigner; payload: Uint8Array; encrypted: boolean; inbox: boolean }
+
+  /** Seals, delays, submits to the first relayer that writes it, and verifies the result (R1–R4). */
+  async function submit(
+    key: Prepared,
+    params: Pick<ArkognitoCreateParams, "attributes" | "contentType">,
+    expSeconds: number,
+    warnings: CheckWarning[],
+  ): Promise<ArkognitoCreateResult> {
+    const attributes: AttributeInputs = { ...params.attributes, project, vtag: key.tag }
+    try {
+      assertNodeSafeNames(attributes)
+    } catch (e) {
+      throw new ArkognitoError((e as Error).message)
+    }
+    const signer = key.signer
+    const expectSigner = key.inbox ? signer.address : undefined
+    const sealed = await sealEnvelope({ signer, app, payload: key.payload, contentType: params.contentType, attributes, expSeconds, encrypted: key.encrypted })
+    const [lo, hi] = opts.delayMs ?? [0, 20_000]
+    await sleep(lo + Math.random() * Math.max(0, hi - lo))
+
+    const failures: string[] = []
+    const order = [...relayers.filter((r) => !r.bad && r.info), ...relayers.filter((r) => r.bad && r.info)]
+    if (order.length === 0) throw new ArkognitoError("no relayer is reachable")
+    const done = (entity: FullRecord, r: Relayer | undefined, s?: StatusResponse, recovered = false): ArkognitoCreateResult => {
+      if (listing) listing.entries.push({ key: entity.key, owner: entity.owner, creator: entity.creator, createdAt: entity.createdAt, attributes: entity.attributes, tag: key.tag })
+      return { entityKey: entity.key, owner: key.owner, txHash: s?.txHash, relayer: r?.url ?? "", batchSize: s?.batchSize, cover: s?.cover, recovered, warnings }
+    }
+    for (const r of order) {
+      try {
+        const token = await tokenSource?.take(app, r.info!)
+        const minAnonymity = opts.minAnonymity && opts.minAnonymity > 1 ? opts.minAnonymity : undefined
+        const status = await submitAndWait(r, {
+          app,
+          owner: key.owner,
+          envelope: sealed.text,
+          attributes: toWire(attributes),
+          expSeconds,
+          token,
+          minAnonymity,
+          maxHoldMs: minAnonymity ? (opts.maxHoldMs ?? 10 * 60_000) : undefined,
+          ...(key.inbox ? { inbox: true } : {}),
+        })
+        if (status.state !== "written" || !status.entityKey || !status.block) {
+          // R4: the relayer may have written it and then failed to say so. Check before retrying elsewhere.
+          const landed = await findOwn(key.tag, key.owner, expectSigner)
+          if (landed) return done(landed, undefined, undefined, true)
+          failures.push(`${r.url}: ${status.error ?? status.state}`)
+          continue
+        }
+        // R1/R2: trust nothing the relayer says. Read the whole batch back (never just our key) and verify.
+        // The RPC node can trail the relayer's by a block or two: read again before calling it a lie.
+        let entity: FullRecord | undefined
+        for (let attempt = 0; attempt < 6 && !entity; attempt++) {
+          if (attempt) await sleep(2000)
+          const batch = await fetchBatches(reader, project, [{ block: BigInt(status.block), creator: r.info!.address }])
+          entity = batch.find((e) => lower(e.key) === lower(status.entityKey!))
+        }
+        const v = entity ? await verifyRecord(entity, { app, owner: key.owner, signer: expectSigner, relayers: [r.info!.address] }) : { ok: false as const, reason: "record is not in the batch the relayer named" }
+        if (!v.ok) {
+          r.bad = true
+          failures.push(`${r.url} misbehaved: ${v.reason}`)
+          continue
+        }
+        return done(entity!, r, status)
+      } catch (e) {
+        failures.push(`${r.url}: ${(e as Error).message}`)
+      }
+    }
+    throw new ArkognitoError(`every relayer failed: ${failures.join(" | ")}`)
   }
 
   const refByKey = new Map<string, KeyRef>()
@@ -405,6 +496,13 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
     const entries = await appIndex(o.refresh === false ? 30_000 : 0)
     const tagged = entries.filter((e) => e.tag)
     const refs = await vault.openTags(tagged.map((e) => e.tag!))
+    if (opts.inbox) {
+      const rest = tagged.flatMap((e, i) => (refs[i] ? [] : [i]))
+      const inboxRefs = await vault.openInbox(rest.map((i) => tagged[i].tag!))
+      rest.forEach((i, j) => {
+        if (inboxRefs[j]) refs[i] = inboxRefs[j]
+      })
+    }
     const mine: { entry: AppEntry; ref: KeyRef }[] = []
     tagged.forEach((e, i) => {
       if (refs[i]) mine.push({ entry: e, ref: refs[i]! })
@@ -416,7 +514,8 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
       const entity = full.get(lower(m.entry.key))
       if (!entity) continue
       const owner = await vault.addressOf(m.ref)
-      const v = await verifyRecord(entity, { app, owner })
+      const signer = m.ref.kind === "inbox" ? await vault.envelopeSignerOf(m.ref) : undefined
+      const v = await verifyRecord(entity, { app, owner, signer })
       if (!v.ok) continue
       const matches = Object.entries(o.where ?? {}).every(([k, want]) => String(v.record.attributes?.[k]?.value) === String(want))
       if (!matches) continue
@@ -447,7 +546,12 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
     relayers: () => relayers.map((r) => ({ url: r.url, address: r.info?.address, bad: r.bad, info: r.info })),
     relayerAddresses,
     createEntity,
+    sendTo,
+    /** Your inbox address for this app. Share it; anyone can then `sendTo` it. */
+    inboxAddress: () => vault.inboxAddress(),
     myEntities,
+    /** How the last `myEntities()` fetched payloads: "all" (the whole app) or "batches" (yours plus cover). */
+    lastReadMode: () => lastRead,
     proveOwnership,
     check,
     checkRarity: rarity,

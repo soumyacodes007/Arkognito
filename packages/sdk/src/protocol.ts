@@ -26,6 +26,11 @@ export type SubmitRequest = {
    */
   minAnonymity?: number
   maxHoldMs?: number
+  /**
+   * An inbox record (inbox.ts): written for someone else, so the envelope is signed by a key derived
+   * for the recipient instead of by `owner`. The relayer then checks only that the signature is valid.
+   */
+  inbox?: boolean
 }
 
 export type SubmitResponse = { id: string }
@@ -39,6 +44,11 @@ export type StatusResponse = {
   txHash?: Hex
   /** How many records shared the batch: the anonymity set this record landed in (B2). */
   batchSize?: number
+  /**
+   * How many of those were cover records the relayer added (B5). Outsiders cannot tell them apart
+   * from real ones; the relayer tells you so you know how many real records you were mixed with.
+   */
+  cover?: number
   /** Block the batch landed in. */
   block?: string
   /** While queued: how many requests are ahead of this one. Lets clients tell a long queue from censorship (R3). */
@@ -63,6 +73,8 @@ export type InfoResponse = {
   maxHoldMs: number
   /** Oblivious HTTP gateway key (X25519, hex), when the relayer accepts requests through an OHTTP relay. Also published in its heartbeat. */
   ohttpKey?: string
+  /** Batches smaller than this are filled with cover records (B5), for encrypted records. */
+  coverMinBatch?: number
 }
 
 export type IssueRequest = {

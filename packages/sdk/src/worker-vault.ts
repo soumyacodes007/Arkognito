@@ -9,6 +9,7 @@
 import type { AttributeInputs, Attributes } from "@arkiv-network/sdk"
 import type { Address, Hex } from "viem"
 import { type DerivationOptions, KeyVault, type SigningWallet } from "./derive.ts"
+import { type PasskeyOptions, createPasskeySecret, getPasskeySecret } from "./passkey.ts"
 import type { EnvelopeBody, IssuanceBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
 import type { VaultRequest } from "./vault.worker.ts"
 
@@ -51,6 +52,24 @@ export class WorkerVault implements Vault {
     // The signature is handed straight to the worker and not kept on this side.
     await v.#call({ op: "fromSignature", signature: await KeyVault.signDerivation(wallet, app, opts), app })
     return v
+  }
+
+  /** Signs in with an existing passkey. The PRF secret goes straight to the worker. */
+  static async fromPasskey(app: string, opts: PasskeyOptions & { worker?: Worker } = {}) {
+    const { secret } = await getPasskeySecret(app, opts)
+    const v = new WorkerVault(opts.worker ?? WorkerVault.spawn(), app)
+    await v.#call({ op: "fromPasskeySecret", secret, app, recovery: false })
+    secret.fill(0)
+    return v
+  }
+
+  /** Creates a passkey and a root from it. Returns the recovery code once: show it to the user. */
+  static async createPasskey(app: string, opts: PasskeyOptions & { worker?: Worker } = {}) {
+    const { secret, credentialId } = await createPasskeySecret(app, opts)
+    const v = new WorkerVault(opts.worker ?? WorkerVault.spawn(), app)
+    const recoveryCode = await v.#call<string>({ op: "fromPasskeySecret", secret, app, recovery: true })
+    secret.fill(0)
+    return { vault: v, recoveryCode, credentialId }
   }
 
   static async fromRecoveryCode(code: string, app: string, opts: { worker?: Worker } = {}) {
@@ -104,6 +123,18 @@ export class WorkerVault implements Vault {
 
   signIssuance(body: IssuanceBody) {
     return this.#call<Hex>({ op: "signIssuance", body })
+  }
+
+  inboxAddress() {
+    return this.#call<string>({ op: "inboxAddress" })
+  }
+
+  openInbox(tags: string[]) {
+    return this.#call<(KeyRef | null)[]>({ op: "openInbox", tags })
+  }
+
+  envelopeSignerOf(ref: KeyRef) {
+    return this.#call<Address>({ op: "envelopeSignerOf", ref })
   }
 
   terminate() {
