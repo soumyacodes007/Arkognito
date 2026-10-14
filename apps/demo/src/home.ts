@@ -21,7 +21,7 @@ export async function mountHome(root: HTMLElement) {
       </div>
       </div>
       <aside class="card tx-card" id="batch" aria-live="polite">
-        <div class="card-head"><span class="dot live"></span><h2>Latest private batch</h2><span class="sub" id="batch-sub">reading Arkiv…</span></div>
+        <div class="card-head"><span class="dot live"></span><h2>Recent private batch</h2><span class="sub" id="batch-sub">reading Arkiv…</span></div>
         <div class="card-body" id="batch-body"><div class="faint" style="font-size:14px">Loading…</div></div>
       </aside>
     </section>
@@ -108,8 +108,15 @@ async function latestBatch(root: HTMLElement) {
       body.innerHTML = `<div class="faint" style="font-size:14px">Save a sketch in the private app to see one here.</div>`
       return
     }
-    const newest = rows.reduce((a, b) => (b.createdAt > a.createdAt ? b : a))
-    const batch = rows.filter((r) => r.createdAt === newest.createdAt && r.creator.toLowerCase() === newest.creator.toLowerCase())
+    // One transaction = one (block, relayer). Show the newest batch that actually mixes people.
+    const groups = new Map<string, typeof rows>()
+    for (const r of rows) {
+      const k = `${r.createdAt}|${r.creator.toLowerCase()}`
+      groups.set(k, [...(groups.get(k) ?? []), r])
+    }
+    const byNewest = [...groups.values()].sort((a, b) => (b[0].createdAt > a[0].createdAt ? 1 : -1))
+    const batch = byNewest.find((g) => g.length >= 3) ?? byNewest[0]
+    const newest = batch[0]
     sub.innerHTML = `block ${Number(newest.createdAt).toLocaleString("en-US")} · ${batch.length} record${batch.length === 1 ? "" : "s"}`
     body.innerHTML = `
       <div class="tx-from"><span class="faint">From</span> ${extLink(explorer.address(newest.creator), short(newest.creator), "ext mono")} <span class="tag">relayer</span></div>
