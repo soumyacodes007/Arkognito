@@ -9,7 +9,7 @@
 import type { AttributeInputs, Attributes } from "@arkiv-network/sdk"
 import type { Address, Hex } from "viem"
 import { type DerivationOptions, KeyVault, type SigningWallet } from "./derive.ts"
-import type { EnvelopeBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
+import type { EnvelopeBody, IssuanceBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
 import type { VaultRequest } from "./vault.worker.ts"
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void }
@@ -96,6 +96,14 @@ export class WorkerVault implements Vault {
 
   decrypt(ref: KeyRef, data: Uint8Array) {
     return this.#call<Uint8Array>({ op: "decrypt", ref, data })
+  }
+
+  issuerIdentity() {
+    return this.#call<Address>({ op: "issuerIdentity" })
+  }
+
+  signIssuance(body: IssuanceBody) {
+    return this.#call<Hex>({ op: "signIssuance", body })
   }
 
   terminate() {

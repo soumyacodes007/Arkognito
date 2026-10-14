@@ -1,4 +1,4 @@
-// Token issuer (Phase 4). Sees the main wallet and how many tokens it took; never sees a token.
+// Token issuer (Phase 4). Sees the requesting identity (by default one derived per wallet and app, not the wallet) and how many tokens it took; never sees a token.
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import type { IncomingMessage, ServerResponse } from "node:http"
 import { hmac } from "@noble/hashes/hmac.js"

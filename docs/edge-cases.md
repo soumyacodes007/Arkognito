@@ -39,7 +39,7 @@ Tests: `unit` = `npm test`, `p2`–`p5` = `npm run test:phaseN`, `edge` = `npm r
 | K7 | Two devices pick the same record address | **Solved** | Same: random ids, no shared counter. | unit, edge (phone + laptop, 3 distinct owners) |
 | K8 | Gaps in counters hide records beyond a gap limit | **Solved** | Same: there is no gap limit to fall off. | edge (second device finds everything) |
 | N7 | Tags themselves as a fingerprint | **Solved** | Every tag is 44 bytes (59 chars) for records and scopes alike, with a fresh IV each time. | unit, edge |
-| K1 | Wallet signs non-deterministically | **Solved** | Signs twice, refuses on mismatch, offers random-root mode with a recovery code. | unit |
+| K1 | Wallet signs non-deterministically | **Solved** | Signs twice the first time a device sees the wallet for an app and stores a 16-byte fingerprint; later connects sign once and compare. Refuses on mismatch, offers random-root mode with a recovery code. | unit, browser |
 | K2 | Smart-contract wallets | **Reduced** | Detected and refused with a clear error (account has code). Not supported in v1. | — |
 | K3 | Phishing site asks for the same signature | **Reduced** | EIP-712 with a fixed purpose, app and chain id; the wallet shows the requesting site. A user who signs it anyway on a phishing site loses unlinkability for that app. | — |
 | K4 | The derivation signature leaks | **Inherent** | Past records become linkable. Rotate to a new purpose for future records. | — |
@@ -108,7 +108,7 @@ Tests: `unit` = `npm test`, `p2`–`p5` = `npm run test:phaseN`, `edge` = `npm r
 | --- | --- | --- | --- | --- |
 | T1 | Issuer gives one user a unique key | **Solved** | Keys only from Arkiv; two for one day = refused. | p4 |
 | T4 | Same token at two relayers at once | **Solved** + monitored | Shared spent list, checked at redemption and right before writing; any id recorded twice is reported. | p4, issuer |
-| T5 | One person, many wallets | **Solved** when the issuer requires it | Optional attestation codes (e.g. handed out in person): quota per code, one day per code. Without codes: per wallet, stated plainly. | edge |
+| T5 | One person, many wallets | **Solved** when the issuer requires it | Optional attestation codes (e.g. handed out in person): quota per code, one day per code. Without codes: per (wallet, app) identity, stated plainly. | edge |
 | T6 | Tokens shared or sold | **Reduced** | Daily expiry keeps the damage small. | — |
 | T7 | Per-place limits would reveal where you went | Decision | Daily totals only. | — |
 | T8 | Key reuse across protocols | **Solved** | Dedicated RSA key per app per day. | p4 |

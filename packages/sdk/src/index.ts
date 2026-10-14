@@ -11,9 +11,10 @@ export {
   derivationTypedData,
   NonDeterministicWalletError,
   SmartContractWalletError,
+  defaultDeterminismStore,
 } from "./derive.ts"
-export type { DerivationOptions, SigningWallet } from "./derive.ts"
-export type { EnvelopeBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
+export type { DerivationOptions, DeterminismMode, DeterminismStore, SigningWallet } from "./derive.ts"
+export type { EnvelopeBody, IssuanceBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
 export { OhttpGateway, ohttpCall } from "./ohttp.ts"
 export type { InnerRequest, InnerResponse } from "./ohttp.ts"
 export { WorkerVault } from "./worker-vault.ts"
@@ -50,6 +51,6 @@ export {
   tokenSuite,
   verifyToken,
 } from "./tokens.ts"
-export type { StoredToken, TokenStore } from "./tokens.ts"
+export type { IssuerIdentity, StoredToken, TokenStore } from "./tokens.ts"
 export { discoverRelayers, heartbeatRelayers } from "./discovery.ts"
 export type { LiveRelayer } from "./discovery.ts"

@@ -22,8 +22,9 @@ import { bytesToHex, hexToBytes, type Account, type Address, type Hex, type Publ
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts"
 import { TIRAMISU_CHAIN_ID } from "./constants.ts"
 import { envelopeDigest } from "./envelope.ts"
+import { issuanceMessage } from "./issuance.ts"
 import { proofTypedData } from "./proof.ts"
-import type { EnvelopeBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
+import type { EnvelopeBody, IssuanceBody, KeyRef, NewKey, ProofBody, Vault, ArkognitoSigner } from "./vault.ts"
 
 /**
  * Any viem wallet client, including the Arkiv SDK's own `createWalletClient`. Its declared type
@@ -92,12 +93,61 @@ export class SmartContractWalletError extends Error {
   }
 }
 
+/** Where the K1 check remembers a wallet it has already verified. Holds a 16-byte fingerprint, never the signature. */
+export type DeterminismStore = { get(key: string): string | null | undefined; set(key: string, value: string): void }
+
+/**
+ * When to check that the wallet signs deterministically (K1):
+ * - "first-use" (default): sign twice the first time a wallet is seen for this app on this device,
+ *   remember a fingerprint of the signature, and sign once afterwards, comparing with the fingerprint.
+ * - "always" or true: sign twice every time.
+ * - "never" or false: sign once and trust the wallet.
+ */
+export type DeterminismMode = "first-use" | "always" | "never" | boolean
+
+export type DerivationOptions = {
+  publicClient?: Pick<PublicClient, "getCode">
+  chainId?: number
+  verifyDeterminism?: DeterminismMode
+  /** Where "first-use" keeps its fingerprints. Default: localStorage when there is one, else this process's memory. */
+  determinismStore?: DeterminismStore
+}
+
+const memoryChecks = new Map<string, string>()
+
+/** localStorage when the environment has a working one, else a map that lives as long as the process. */
+export function defaultDeterminismStore(): DeterminismStore {
+  const mem: DeterminismStore = { get: (k) => memoryChecks.get(k), set: (k, v) => void memoryChecks.set(k, v) }
+  return {
+    get(k) {
+      try {
+        const v = globalThis.localStorage?.getItem(k)
+        if (v != null) return v
+      } catch {
+        // storage blocked
+      }
+      return mem.get(k)
+    },
+    set(k, v) {
+      mem.set(k, v)
+      try {
+        globalThis.localStorage?.setItem(k, v)
+      } catch {
+        // storage blocked: memory only
+      }
+    },
+  }
+}
+
+/** A fingerprint of a derivation signature: enough to notice a different signature, useless for deriving keys. */
+function signatureFingerprint(sig: Hex): string {
+  return bytesToHex(hkdf(sha256, hexToBytes(sig), undefined, enc.encode("arkognito/wallet-check/v1"), 16))
+}
+
 /**
  * Holds the root key for one app and hands out derived addresses and signatures.
  * The root is in a private field: nothing outside this class can read it.
  */
-export type DerivationOptions = { publicClient?: Pick<PublicClient, "getCode">; chainId?: number; verifyDeterminism?: boolean }
-
 export class KeyVault implements Vault {
   readonly #root: Uint8Array
   readonly app: string
@@ -110,14 +160,16 @@ export class KeyVault implements Vault {
     this.mode = mode
   }
 
-  /** Root from a wallet signature. Signs twice and refuses wallets that do not sign deterministically (K1). */
+  /** Root from a wallet signature. Refuses wallets that do not sign deterministically (K1). */
   static async fromWallet(wallet: SigningWallet, app: string, opts: DerivationOptions = {}): Promise<KeyVault> {
     return KeyVault.fromSignature(await KeyVault.signDerivation(wallet, app, opts), app)
   }
 
   /**
    * Asks the wallet for the derivation signature, after refusing smart-contract wallets (K2), and
-   * signs twice to refuse wallets whose signatures are not deterministic (K1).
+   * refuses wallets whose signatures are not deterministic (K1). By default the wallet signs twice
+   * only the first time this device sees it for this app; later connects sign once and compare
+   * against a stored fingerprint.
    */
   static async signDerivation(wallet: SigningWallet, app: string, opts: DerivationOptions = {}): Promise<Hex> {
     const signer = asSigner(wallet)
@@ -126,13 +178,28 @@ export class KeyVault implements Vault {
       const code = await opts.publicClient.getCode({ address: account.address })
       if (code && code !== "0x") throw new SmartContractWalletError(account.address)
     }
-    const typed = derivationTypedData(app, opts.chainId)
+    const chainId = opts.chainId ?? TIRAMISU_CHAIN_ID
+    const typed = derivationTypedData(app, chainId)
     const sign = () => signer.signTypedData({ account, ...typed })
+    const mode = opts.verifyDeterminism ?? "first-use"
     const first = await sign()
-    if (opts.verifyDeterminism !== false) {
+    if (mode === false || mode === "never") return first
+    if (mode === true || mode === "always") {
       const second = await sign()
       if (first.toLowerCase() !== second.toLowerCase()) throw new NonDeterministicWalletError()
+      return first
     }
+    const store = opts.determinismStore ?? defaultDeterminismStore()
+    const slot = `arkognito:wallet-check:${chainId}:${app}:${account.address.toLowerCase()}`
+    const fp = signatureFingerprint(first)
+    const known = store.get(slot)
+    if (known) {
+      if (known !== fp) throw new NonDeterministicWalletError()
+      return first
+    }
+    const second = await sign()
+    if (first.toLowerCase() !== second.toLowerCase()) throw new NonDeterministicWalletError()
+    store.set(slot, fp)
     return first
   }
 
@@ -222,6 +289,26 @@ export class KeyVault implements Vault {
         acct.signMessage({ message: { raw: envelopeDigest(body, attributes) } }),
       signProof: (body: ProofBody) => acct.signTypedData(proofTypedData(body)),
     }
+  }
+
+  #issuer(): PrivateKeyAccount {
+    // Its own HKDF label, outside the "record/" and "scope/" namespaces, so no KeyRef reaches it.
+    const info = "identity/issuer/v1"
+    let acct = this.#cache.get(info)
+    if (!acct) {
+      acct = privateKeyToAccount(childPrivateKey(this.#root, info))
+      this.#cache.set(info, acct)
+    }
+    return acct
+  }
+
+  async issuerIdentity(): Promise<Address> {
+    return this.#issuer().address
+  }
+
+  async signIssuance(body: IssuanceBody): Promise<Hex> {
+    if (body.app !== this.app) throw new Error(`this vault is for ${this.app}, not ${body.app}`)
+    return this.#issuer().signMessage({ message: issuanceMessage(body, body.ts) })
   }
 
   async encrypt(ref: KeyRef, data: Uint8Array): Promise<Uint8Array> {

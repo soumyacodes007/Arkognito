@@ -8,13 +8,15 @@ import {
   WorkerVault,
   createPrivateClient,
   envelopeSigner,
+  epochOf,
+  issuanceMessage,
   parseEnvelope,
   scopeRef,
   sealEnvelope,
   signOwnershipProof,
   verifyOwnershipProof,
 } from "arkognito"
-import { createWalletClient, http } from "viem"
+import { createWalletClient, http, recoverMessageAddress } from "viem"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 
 const results: { name: string; ok: boolean; detail?: string }[] = []
@@ -47,6 +49,28 @@ try {
 
   const ct = await isolated.encrypt(fromWorker.ref, new TextEncoder().encode("secret"))
   check("worker encryption round-trips through another vault of the same wallet", new TextDecoder().decode(await local.decrypt(fromWorker.ref, ct)) === "secret")
+
+// Derived issuer identity: same in the worker as in this thread, and it signs issuance requests.
+  const identity = await isolated.issuerIdentity()
+  check("worker derives the same issuer identity", identity === (await local.issuerIdentity()))
+  check("…which is not the wallet", identity !== wallet.account.address)
+  const ib = { app, epoch: epochOf(), blinded: ["AAAA"], ts: Date.now() }
+  check("issuance signed inside the worker recovers to the identity", (await recoverMessageAddress({ message: issuanceMessage(ib, ib.ts), signature: await isolated.signIssuance(ib) })) === identity)
+
+  // First-use determinism check, remembered in localStorage.
+  const fresh = createWalletClient({ account: privateKeyToAccount(generatePrivateKey()), chain: tiramisu, transport: http() })
+  let prompts = 0
+  const counted = { account: fresh.account, signTypedData: (a: never) => (prompts++, fresh.signTypedData(a)), signMessage: (a: never) => fresh.signMessage(a) }
+  const slot = `arkognito:wallet-check:7738577:${app}:${fresh.account.address.toLowerCase()}`
+  const w1 = await WorkerVault.fromWallet(counted as never, app)
+  check("first connect on this device: two prompts", prompts === 2, `prompts: ${prompts}`)
+  check("…and a fingerprint lands in localStorage", /^0x[0-9a-f]{32}$/.test(localStorage.getItem(slot) ?? ""))
+  prompts = 0
+  const w2 = await WorkerVault.fromWallet(counted as never, app)
+  check("next connect: one prompt", prompts === 1, `prompts: ${prompts}`)
+  check("…with the same keys", (await w1.addressOf(scopeRef("p"))) === (await w2.addressOf(scopeRef("p"))))
+  w1.terminate()
+  w2.terminate()
 
   const fields = Object.getOwnPropertyNames(isolated)
   check("the page-side vault object holds no key material", fields.join() === "app", `own fields: ${fields.join(",")}`)

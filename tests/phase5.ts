@@ -9,7 +9,7 @@ import { ExpirationTime, createWalletClient, jsonToPayload } from "@arkiv-networ
 import { dec, i32 } from "@arkiv-network/sdk/attr"
 import { tiramisu } from "@arkiv-network/sdk/chains"
 import { eq } from "@arkiv-network/sdk/query"
-import { checkRecord, createPrivateClient } from "arkognito"
+import { PAD_BUCKETS, checkRecord, createPrivateClient } from "arkognito"
 import { http, type Hex } from "viem"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import { check, done, publicClient } from "./helpers"
@@ -94,7 +94,7 @@ const perOwner = new Map<string, number>()
 for (const r of hidden) perOwner.set(r.owner, (perOwner.get(r.owner) ?? 0) + 1)
 check("observer: every Arkognito sketch has its own owner", Math.max(...perOwner.values()) === 1, `${hidden.length} Arkognito sketches`)
 check("observer: Arkognito sketches come only from relayers", new Set(hidden.map((r) => r.creator)).size <= 2)
-check("observer: Arkognito sketch sizes fall in padding buckets", hidden.every((r) => [256, 1024, 4096, 16384].includes(r.size)),
+check("observer: Arkognito sketch sizes fall in padding buckets", hidden.every((r) => (PAD_BUCKETS as readonly number[]).includes(r.size)),
   [...new Set(hidden.map((r) => r.size))].join("/"))
 
 done()

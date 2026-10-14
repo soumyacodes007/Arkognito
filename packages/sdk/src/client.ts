@@ -4,7 +4,7 @@ import { tiramisu } from "@arkiv-network/sdk/chains"
 import { type Address, type Hex, type PublicClient, http } from "viem"
 import { assertNodeSafeNames, toWire } from "./attrs.ts"
 import { type CheckWarning, checkRarity, checkRecord } from "./check.ts"
-import { KeyVault, type SigningWallet, scopeRef } from "./derive.ts"
+import { type DeterminismMode, type DeterminismStore, KeyVault, type SigningWallet, scopeRef } from "./derive.ts"
 import { heartbeatRelayers } from "./discovery.ts"
 import { expiryBucket, expirySeconds, fromBase64, sealEnvelope } from "./envelope.ts"
 import { type InnerResponse, ohttpCall } from "./ohttp.ts"
@@ -61,6 +61,13 @@ export type PrivateClientOptions = {
   wallet?: SigningWallet
   vault?: Vault
   /**
+   * When to check that the wallet signs deterministically (K1). Default "first-use": two prompts
+   * the first time this device sees the wallet for this app, one prompt afterwards.
+   */
+  verifyDeterminism?: DeterminismMode
+  /** Where "first-use" remembers verified wallets. Default: localStorage, else memory. */
+  determinismStore?: DeterminismStore
+  /**
    * Keep derived keys in a Web Worker so the page never holds them (D3). Default: on in browsers,
    * off elsewhere. If the worker cannot start, the client warns and keeps keys in this thread.
    */
@@ -92,10 +99,17 @@ export type PrivateClientOptions = {
   /** Extra batches fetched alongside your own when reading your records, as cover (D1). Default 2. */
   coverBatches?: number
   /**
-   * Rate-limit tokens. "auto" (default): when a relayer requires tokens, fetch the day's tokens with
-   * `wallet` at session start, never at write time (T2). Or pass your own TokenSource.
+   * Rate-limit tokens. "auto" (default): when a relayer requires tokens, fetch the day's tokens at
+   * session start, never at write time (T2). Or pass your own TokenSource.
    */
   tokens?: TokenSource | "auto"
+  /**
+   * Who asks the issuer for tokens in auto mode. "derived" (default): an address derived from your
+   * Arkognito root for this app, so asking opens no wallet prompt and the issuer never sees your
+   * wallet. "wallet": the wallet signs each request (one more prompt), for issuers that key quotas
+   * to known wallets.
+   */
+  tokenIdentity?: "derived" | "wallet"
   /** Where auto mode keeps unspent tokens. Defaults to memory; use browserTokenStore() to keep them across sessions. */
   tokenStore?: TokenStore
   /** One-time attestation code, for issuers that require one before handing out tokens (T5). */
@@ -122,7 +136,11 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
 
   async function openVault(): Promise<Vault> {
     if (!opts.wallet) throw new ArkognitoError("pass either `wallet` or `vault`")
-    const derivation = { publicClient: reader as unknown as PublicClient }
+    const derivation = {
+      publicClient: reader as unknown as PublicClient,
+      verifyDeterminism: opts.verifyDeterminism,
+      determinismStore: opts.determinismStore,
+    }
     const browser = typeof window !== "undefined" && typeof Worker !== "undefined"
     if (opts.isolateKeys ?? browser) {
       let worker: Worker | undefined
@@ -199,8 +217,17 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
   // ---- rate-limit tokens (T2) --------------------------------------------------------------
   let tokenSource: TokenSource | undefined = typeof opts.tokens === "object" ? opts.tokens : undefined
   const issuing = relayers.find((r) => r.info?.tokensRequired && r.info.issuer && r.info.issuerUrl)?.info
-  if (!tokenSource && (opts.tokens ?? "auto") === "auto" && issuing && opts.wallet) {
-    const tw = new TokenWallet({ wallet: opts.wallet, reader, issuer: issuing.issuer!, issuerUrl: issuing.issuerUrl!, store: opts.tokenStore, attestation: opts.tokenAttestation, fetch: fetchFn })
+  const tokenIdentity = opts.tokenIdentity ?? "derived"
+  if (!tokenSource && (opts.tokens ?? "auto") === "auto" && issuing && (tokenIdentity === "derived" || opts.wallet)) {
+    const tw = new TokenWallet({
+      ...(tokenIdentity === "derived" ? { identity: vault } : { wallet: opts.wallet }),
+      reader,
+      issuer: issuing.issuer!,
+      issuerUrl: issuing.issuerUrl!,
+      store: opts.tokenStore,
+      attestation: opts.tokenAttestation,
+      fetch: fetchFn,
+    })
     // Fetched at session start, not at write time, so issuance and redemption are apart in time.
     let prefetch: Promise<unknown> = Promise.resolve()
     if (tw.available(app) === 0) prefetch = tw.acquire(app, 5).catch(() => tw.acquire(app, 1).catch(() => undefined))

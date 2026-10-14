@@ -43,4 +43,14 @@ export interface Vault {
   /** Encrypts a payload so only this vault can read it (AES-256-GCM under a per-record key). */
   encrypt(ref: KeyRef, data: Uint8Array): Promise<Uint8Array>
   decrypt(ref: KeyRef, data: Uint8Array): Promise<Uint8Array>
+  /**
+   * The address that asks the token issuer for rate-limit tokens. Derived from the root, stable per
+   * (wallet, app), unrelated to the wallet address and to every record or scope key.
+   */
+  issuerIdentity(): Promise<Address>
+  /** Signs a token-issuance request with the issuer identity (EIP-191 over `issuanceMessage`). */
+  signIssuance(body: IssuanceBody): Promise<Hex>
 }
+
+/** The fields an issuance request signs (see issuance.ts). */
+export type IssuanceBody = { app: string; epoch: number; blinded: string[]; ts: number }

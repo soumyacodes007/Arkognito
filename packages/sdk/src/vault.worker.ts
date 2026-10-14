@@ -1,7 +1,7 @@
 // Runs inside a Web Worker. Holds the KeyVault; answers with addresses, tags, Arkognito-shaped signatures
 // and ciphertext only (D3). It offers no "sign arbitrary bytes" operation.
 import { KeyVault } from "./derive.ts"
-import type { EnvelopeBody, KeyRef, ProofBody } from "./vault.ts"
+import type { EnvelopeBody, IssuanceBody, KeyRef, ProofBody } from "./vault.ts"
 
 export type VaultRequest =
   | { id: number; op: "fromSignature"; signature: `0x${string}`; app: string }
@@ -15,6 +15,8 @@ export type VaultRequest =
   | { id: number; op: "signProof"; ref: KeyRef; body: ProofBody }
   | { id: number; op: "encrypt"; ref: KeyRef; data: Uint8Array }
   | { id: number; op: "decrypt"; ref: KeyRef; data: Uint8Array }
+  | { id: number; op: "issuerIdentity" }
+  | { id: number; op: "signIssuance"; body: IssuanceBody }
 
 let vault: KeyVault | undefined
 
@@ -53,6 +55,10 @@ async function handle(req: VaultRequest): Promise<unknown> {
       return need().encrypt(req.ref, req.data)
     case "decrypt":
       return need().decrypt(req.ref, req.data)
+    case "issuerIdentity":
+      return need().issuerIdentity()
+    case "signIssuance":
+      return need().signIssuance(req.body)
   }
 }
 

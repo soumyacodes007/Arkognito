@@ -58,6 +58,11 @@ const proof = await ark.proveOwnership(entityKey, { challenge, verifier: "desk-1
 `relayers: [url, …]` to use your own, and `ohttpRelay: url` to hide your IP from them. When a
 relayer requires rate-limit tokens, the client fetches the day's tokens at session start.
 
+Connecting costs one wallet prompt. The first time a device sees a wallet for an app it asks
+twice, to check that the wallet signs deterministically (K1), and remembers a fingerprint of the
+signature in `localStorage`; after that it asks once. Tokens are requested by an identity derived
+from your root key, so they need no prompt and the issuer never sees your wallet.
+
 Making Arkiv's MetaMask Sketch App private took 3 changed lines:
 compare [`apps/demo/src/store-public.ts`](apps/demo/src/store-public.ts) with
 [`store-private.ts`](apps/demo/src/store-private.ts).
@@ -101,6 +106,10 @@ With a relayer running, `node examples/quickstart.mjs` writes one private record
 wallet (no funds needed), finds it with `myEntities()`, and shows that an owner query on the wallet
 finds nothing.
 
+For a live demo, `npm run demo:crowd` runs synthetic users that save synthetic sketches through the
+live relayers (throwaway keys, no funds), so a demo save lands in a full shuffled batch. Start it about
+two minutes before recording: each new user's first token has to be 60 seconds old before it is spent.
+
 Every edge case we know of and how it is handled: [docs/edge-cases.md](docs/edge-cases.md).
 
 ## Tests
@@ -114,6 +123,7 @@ npm run test:phase4      # blind tokens: quota, double spend, unlinkability, iss
 npm run test:phase5      # Sketch App diff, check(), end to end (needs npm run dev:relayers)
 npm run test:issuer      # issuer quota across restarts, concurrent requests, double-spend monitor
 npm run test:edge        # edge-case sweep: read privacy, devices, encryption, crash recovery, minAnonymity, OHTTP, limits, attestation
+RELAYERS=https://a,https://b npm run test:popup   # wallet prompts at connect (2 first visit, 1 after), against live relayers
 ```
 
 The on-chain tests need `RELAYER_1_PRIVATE_KEY`, `RELAYER_2_PRIVATE_KEY`, `ISSUER_WALLET_PRIVATE_KEY`,
@@ -144,7 +154,7 @@ examples/           quickstart.mjs: plain Node, one private record end to end
 | --- | --- | --- |
 | Anyone reading Arkiv | all records, owners, creators, batches | which records belong to the same person |
 | Relayer | records, one-time owners, request times, IP addresses | which wallet sent which record |
-| Issuer | wallet and how many tokens it took | which records those tokens paid for |
+| Issuer | a per-app identity derived from your root key, how many tokens it took | your wallet, and which records those tokens paid for |
 
 Said plainly:
 
@@ -153,8 +163,9 @@ Said plainly:
   the request but not your IP. That holds only if the two are run by different people.
 - Anonymity is as large as each batch. Set `minAnonymity` to refuse small batches; otherwise the
   client reports the size it landed in.
-- Quotas are per wallet, and wallets are free, unless the issuer requires attestation codes
-  (`ISSUER_CODES_FILE`, for example codes handed out in person), which limit people instead.
+- Quotas are per (wallet, app) identity, and wallets are free, unless the issuer requires
+  attestation codes (`ISSUER_CODES_FILE`, for example codes handed out in person), which limit people
+  instead. An issuer that must see the wallet itself can be served with `tokenIdentity: "wallet"`.
 - The page that runs Arkognito can still ask the key worker for Arkognito signatures and ownership proofs.
   The worker stops key leaks and arbitrary signing, not a hostile frontend.
 - Content can identify a person on its own. `check()` helps but cannot catch everything.

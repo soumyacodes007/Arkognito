@@ -3,11 +3,14 @@ import { test } from "node:test"
 import { ExpirationTime } from "@arkiv-network/sdk"
 import { dec, i32, u64 } from "@arkiv-network/sdk/attr"
 import { tiramisu } from "@arkiv-network/sdk/chains"
-import { createWalletClient, http, type Hex } from "viem"
+import { createWalletClient, http, recoverMessageAddress, type Hex } from "viem"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import {
   KeyVault,
   OhttpGateway,
+  TokenWallet,
+  epochOf,
+  issuanceMessage,
   TAG_BYTES,
   canonicalAttributes,
   checkRarity,
@@ -43,6 +46,107 @@ test("K1: a wallet that signs non-deterministically is refused", async () => {
     signMessage: async () => "0x",
   }
   await assert.rejects(KeyVault.fromWallet(flaky as never, "x"), /two different signatures/)
+})
+
+/** A real wallet that counts how often it is asked to sign. */
+function counting(w: typeof wallet) {
+  const n = { typed: 0, message: 0 }
+  const c = {
+    account: w.account,
+    signTypedData: (a: never) => (n.typed++, w.signTypedData(a)),
+    signMessage: (a: never) => (n.message++, w.signMessage(a)),
+  }
+  return { c: c as never, n }
+}
+
+function mapStore() {
+  const m = new Map<string, string>()
+  return { m, store: { get: (k: string) => m.get(k), set: (k: string, v: string) => void m.set(k, v) } }
+}
+
+test("K1 first-use: two prompts the first time a wallet is seen, one afterwards, same keys", async () => {
+  const w = createWalletClient({ account: privateKeyToAccount(generatePrivateKey()), chain: tiramisu, transport: http() })
+  const { store, m } = mapStore()
+  const first = counting(w)
+  const a = await KeyVault.fromWallet(first.c, "kendra-watch", { determinismStore: store })
+  assert.equal(first.n.typed, 2)
+  assert.equal(m.size, 1)
+  const [slot, fp] = [...m.entries()][0]
+  assert.match(slot, new RegExp(`^arkognito:wallet-check:7738577:kendra-watch:${w.account.address.toLowerCase()}$`))
+  assert.match(fp, /^0x[0-9a-f]{32}$/)
+  assert.ok(!fp.includes((await w.signTypedData(derivationTypedData("kendra-watch"))).slice(2, 34)), "the stored value is not the signature")
+  const again = counting(w)
+  const b = await KeyVault.fromWallet(again.c, "kendra-watch", { determinismStore: store })
+  assert.equal(again.n.typed, 1)
+  assert.equal(await a.addressOf(scopeRef("p")), await b.addressOf(scopeRef("p")))
+  // Another app on the same device is a first use again.
+  const other = counting(w)
+  await KeyVault.fromWallet(other.c, "sketch", { determinismStore: store })
+  assert.equal(other.n.typed, 2)
+})
+
+test("K1 first-use: a later signature that differs from the stored fingerprint is refused", async () => {
+  const { store } = mapStore()
+  await KeyVault.fromWallet(wallet, "fp-check", { determinismStore: store })
+  const liar = { account: wallet.account, signTypedData: async () => `0x${"ab".repeat(65)}`, signMessage: async () => "0x" }
+  await assert.rejects(KeyVault.fromWallet(liar as never, "fp-check", { determinismStore: store }), /two different signatures/)
+})
+
+test("K1 modes: never signs once, always signs twice every time", async () => {
+  const { store } = mapStore()
+  const never = counting(wallet)
+  await KeyVault.fromWallet(never.c, "modes", { verifyDeterminism: "never", determinismStore: store })
+  assert.equal(never.n.typed, 1)
+  for (let i = 0; i < 2; i++) {
+    const always = counting(wallet)
+    await KeyVault.fromWallet(always.c, "modes", { verifyDeterminism: "always", determinismStore: store })
+    assert.equal(always.n.typed, 2)
+  }
+  const legacy = counting(wallet)
+  await KeyVault.fromWallet(legacy.c, "modes", { verifyDeterminism: false })
+  assert.equal(legacy.n.typed, 1)
+})
+
+test("issuer identity: stable per wallet + app, unlinked to the wallet and every record key; signs issuance", async () => {
+  const a = await KeyVault.fromWallet(wallet, "kendra-watch")
+  const b = await KeyVault.fromWallet(wallet, "kendra-watch")
+  const id = await a.issuerIdentity()
+  assert.equal(id, await b.issuerIdentity())
+  assert.notEqual(id, wallet.account.address)
+  assert.notEqual(id, await (await KeyVault.fromWallet(wallet, "sketch")).issuerIdentity())
+  assert.notEqual(id, await (await KeyVault.fromWallet(otherWallet, "kendra-watch")).issuerIdentity())
+  assert.notEqual(id, await a.addressOf(scopeRef("profile")))
+  assert.notEqual(id, (await a.newRecord()).address)
+  const body = { app: "kendra-watch", epoch: epochOf(), blinded: ["AAAA", "BBBB"], ts: Date.now() }
+  const sig = await a.signIssuance(body)
+  assert.equal(await recoverMessageAddress({ message: issuanceMessage(body, body.ts), signature: sig }), id)
+  await assert.rejects(a.signIssuance({ ...body, app: "sketch" }), /not sketch/)
+})
+
+test("TokenWallet with a derived identity asks the issuer without touching the wallet", async () => {
+  const v = await KeyVault.fromWallet(wallet, "kendra-watch")
+  const pair = (await crypto.subtle.generateKey(
+    { name: "RSA-PSS", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-384" },
+    true,
+    ["sign", "verify"],
+  )) as CryptoKeyPair
+  const issuerSpki = Buffer.from(await crypto.subtle.exportKey("spki", pair.publicKey)).toString("base64")
+  let posted: Record<string, unknown> | undefined
+  const fakeFetch = (async (_url: string, init?: RequestInit) => {
+    posted = JSON.parse(String(init?.body))
+    return new Response("nope", { status: 429 })
+  }) as typeof fetch
+  const reader = {
+    select: () => ({ where: () => ({ createdBy: () => ({ limit: () => ({ fetch: async () => ({ entities: [{ key: "0x01", toJson: () => ({ spki: issuerSpki }) }] }) }) }) }) }),
+  }
+  const tw = new TokenWallet({ identity: v, reader: reader as never, issuer: "0x0000000000000000000000000000000000000001", issuerUrl: "https://issuer.test", fetch: fakeFetch })
+  await assert.rejects(tw.acquire("kendra-watch", 2), /issuer refused: 429/)
+  assert.ok(posted)
+  assert.equal(posted.wallet, await v.issuerIdentity())
+  assert.equal(
+    await recoverMessageAddress({ message: issuanceMessage(posted as never, posted.ts as number), signature: posted.walletSignature as Hex }),
+    await v.issuerIdentity(),
+  )
 })
 
 test("scope keys: same wallet + app gives the same key; another app, chain or wallet does not", async () => {

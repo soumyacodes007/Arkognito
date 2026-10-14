@@ -18,8 +18,12 @@ block time 2 s. Arkognito's own entities carry `project = "arkognito-7f3k"`. Att
    message: { purpose: "arkognito key v1", app: <app>, chainId: 7738577 }
    ```
 
-   The client signs twice and refuses the wallet if the two signatures differ. Smart-contract
-   wallets (account with code) are refused.
+   The client refuses a wallet whose signatures are not deterministic. By default it signs twice
+   the first time a device sees a wallet for an app, refuses on a mismatch, and stores
+   `fp = HKDF-SHA256(signature, info = "arkognito/wallet-check/v1", L = 16)` under
+   `arkognito:wallet-check:<chainId>:<app>:<lowercase address>` (localStorage in browsers). Later it
+   signs once and refuses if the fingerprint differs. `verifyDeterminism: "always"` signs twice every
+   time; `"never"` signs once. Smart-contract wallets (account with code) are refused.
 
 2. `root = HKDF-SHA256(ikm = signature bytes (65), salt = none, info = "arkognito/root/v1/" + app, L = 32)`.
    Random-root mode: `root` is 32 random bytes; recovery code `"arkognito1-" + hex(root)`.
@@ -28,6 +32,9 @@ block time 2 s. Arkognito's own entities carry `project = "arkognito-7f3k"`. Att
    - a record gets a fresh random `id` (no counters: nothing can be reused after records expire,
      and two devices cannot collide);
    - a scope's `id = sha256("arkognito/scope/" + name)[0..15]`, so all its records share one owner on purpose.
+   - the issuer identity is `k = HKDF(root, info = "identity/issuer/v1", 48)` reduced the same way. It
+     is outside the `record/` and `scope/` labels, so no key reference reaches it, and it is used only
+     to sign token-issuance requests.
 
 4. The key for a reference:
 
@@ -217,13 +224,14 @@ app and epoch: the issuer equivocated; refuse it.
 ```
 POST /v1/tokens/issue  { app, epoch, wallet, blinded: [base64…], ts, walletSignature, attestation? }
 
-walletSignature = personal_sign by wallet over:
+wallet          = the issuer identity (default) or the user's wallet (tokenIdentity: "wallet")
+walletSignature = personal_sign by that address over:
   "arkognito tokens v1\napp: <app>\nday: <epoch>\ncount: <n>\nrequest: <0x sha256 of the blinded list joined by ','>\nts: <ts>"
 ```
 
 Each token message is 32 random bytes, prepared as `32 random bytes || message` (64 bytes) and
 blinded. The issuer checks the signature, that `ts` is within 5 minutes, and the quota, then returns
-`{ blindSignatures: [base64…], remaining }`. The quota is per wallet per app per day, or, when the
+`{ blindSignatures: [base64…], remaining }`. The quota is per `wallet` field per app per day, or, when the
 issuer requires attestation codes, per code (a code is good for one day). `GET /v1/issuer/key?app=&epoch=`
 asks the issuer to publish today's key.
 

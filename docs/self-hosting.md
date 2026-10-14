@@ -108,7 +108,7 @@ Relayer:
 | `ISSUER` | off | Also run the issuer in this service |
 | `ISSUER_WALLET_PRIVATE_KEY`, `ISSUER_RSA_SEED` | — | With `ISSUER=on` |
 | `ISSUER_WALLET_ADDRESS`, `ISSUER_URL` | — | With tokens on, for relayers that do not run the issuer |
-| `TOKENS_PER_DAY` | 5 | Per wallet (or per attestation code) per app per day |
+| `TOKENS_PER_DAY` | 5 | Per requesting identity (or per attestation code) per app per day. Clients ask with an identity derived per (wallet, app) by default |
 | `ISSUER_QUOTA_FILE` | — | Keep quotas across restarts (names no wallet: entries are HMACs) |
 | `ISSUER_CODES_FILE` | — | sha256 hashes of one-time attestation codes; when set, tokens need a code |
 | `OHTTP` | on | Accept Oblivious HTTP requests |

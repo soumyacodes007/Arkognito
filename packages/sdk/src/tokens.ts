@@ -12,8 +12,12 @@ import { type Address, type Hex, bytesToHex, hexToBytes } from "viem"
 import { fromBase64, toBase64 } from "./envelope.ts"
 import { ARKOGNITO_PROJECT } from "./constants.ts"
 import { type SigningWallet, asSigner } from "./derive.ts"
-import type { InfoResponse, IssueRequest, IssueResponse, TokenRedemption } from "./protocol.ts"
+import { issuanceMessage } from "./issuance.ts"
+import type { InfoResponse, IssueResponse, TokenRedemption } from "./protocol.ts"
 import type { ArkivReader } from "./reader.ts"
+import type { Vault } from "./vault.ts"
+
+export { issuanceMessage }
 
 export const tokenSuite = () => RSABSSA.SHA384.PSS.Randomized()
 
@@ -56,11 +60,6 @@ export async function fetchIssuerKey(
   return { key: await importIssuerKey(spki), spki, entityKey: entities[0].key }
 }
 
-/** The message a wallet signs to ask for tokens. Includes a timestamp so a captured request cannot be replayed later. */
-export function issuanceMessage(r: Pick<IssueRequest, "app" | "epoch" | "blinded">, ts: number) {
-  const digest = bytesToHex(sha256(new TextEncoder().encode(r.blinded.join(","))))
-  return `arkognito tokens v1\napp: ${r.app}\nday: ${r.epoch}\ncount: ${r.blinded.length}\nrequest: ${digest}\nts: ${ts}`
-}
 
 /** sha256 of the prepared message: the public id recorded in `arkognito.spent`. Random, so it says nothing about the holder. */
 export function tokenId(prepared: Uint8Array): Hex {
@@ -100,15 +99,25 @@ export const memoryStore = (): TokenStore => {
   return { load: () => t, save: (x) => void (t = x) }
 }
 
+/** What a TokenWallet needs from a vault to ask for tokens under the derived issuer identity. */
+export type IssuerIdentity = Pick<Vault, "issuerIdentity" | "signIssuance">
+
 /**
  * Client side. Fetches the day's tokens in advance, at a random time (T2), and hands out one per
- * write attempt. Issuance needs the main wallet (quota is per wallet); redemption never does.
+ * write attempt. Issuance is signed by the vault's derived issuer identity when `identity` is set
+ * (no wallet pop-up), otherwise by the wallet; redemption never involves either.
  */
 export class TokenWallet {
   #store: TokenStore
   constructor(
     private opts: {
-      wallet: SigningWallet
+      /** Signs issuance requests when no `identity` is given. */
+      wallet?: SigningWallet
+      /**
+       * A vault whose derived issuer identity signs issuance requests instead of the wallet. The
+       * quota is then per (wallet, app) identity, and asking for tokens opens no wallet prompt.
+       */
+      identity?: IssuerIdentity
       reader: ArkivReader
       issuer: Address
       issuerUrl: string
@@ -153,11 +162,20 @@ export class TokenWallet {
         return { prepared, blindedMsg, inv }
       }),
     )
-    const signer = asSigner(this.opts.wallet)
-    const account = signer.account
-    const body = { app, epoch, wallet: account.address, blinded: pending.map((p) => toBase64(p.blindedMsg)) }
+    const blinded = pending.map((p) => toBase64(p.blindedMsg))
     const ts = Date.now()
-    const walletSignature = await signer.signMessage({ account, message: issuanceMessage(body, ts) })
+    let body: { app: string; epoch: number; wallet: Address; blinded: string[] }
+    let walletSignature: Hex
+    if (this.opts.identity) {
+      body = { app, epoch, wallet: await this.opts.identity.issuerIdentity(), blinded }
+      walletSignature = await this.opts.identity.signIssuance({ app, epoch, blinded, ts })
+    } else {
+      if (!this.opts.wallet) throw new Error("TokenWallet needs a wallet or an identity to ask for tokens")
+      const signer = asSigner(this.opts.wallet)
+      const account = signer.account
+      body = { app, epoch, wallet: account.address, blinded }
+      walletSignature = await signer.signMessage({ account, message: issuanceMessage(body, ts) })
+    }
     const res = await fetchFn(`${this.opts.issuerUrl}/v1/tokens/issue`, {
       method: "POST",
       headers: { "content-type": "application/json" },
