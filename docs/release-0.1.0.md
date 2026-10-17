@@ -41,6 +41,15 @@ observed engine-compatibility warning. No runtime code changed after consumer ve
 - Initial `npm whoami --registry=https://registry.npmjs.org` failed with
   `E401 Unauthorized - GET https://registry.npmjs.org/-/whoami`. Authentication is required to publish.
 - The public registry lookup returned `E404` for `arkognito`; package publication was not assumed.
+- The actual publish attempt of the tested tarball was rejected with
+  `E404 Not Found - PUT https://registry.npmjs.org/arkognito - Not found` and
+  `The requested resource 'arkognito@0.1.0' could not be found or you do not have permission to access it.`
+  The account check also failed with `E401`; a valid npm login is needed before retrying. No npm
+  publication or version tag is claimed by this record.
+
+Code and documentation were fast-forwarded to their GitHub `main` branches after validation. This
+release remains prepared locally pending successful npm publication. Run `npm login` locally;
+never put registry credentials, OTPs or tokens in the repository or chat.
 
 These checks do not establish an independent audit, production credential admission, mobile or
 physical-authenticator support, or safe dependency exploitability. See the README for scope.
