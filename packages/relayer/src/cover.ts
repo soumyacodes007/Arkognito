@@ -31,6 +31,8 @@ function signerFor(owner = privateKeyToAccount(generatePrivateKey()), signWith =
 
 /** A cover record shaped like `template`, or undefined when the template cannot be copied safely. */
 export async function coverLike(template: BatchItem): Promise<BatchItem | undefined> {
+  // A synthetic cover cannot forge group membership or reuse a member's nullifier.
+  if (template.membership) return undefined
   let env
   try {
     env = parseEnvelope(template.envelope)

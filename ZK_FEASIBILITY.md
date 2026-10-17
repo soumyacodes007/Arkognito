@@ -1,5 +1,10 @@
 # Veil ZK feasibility — measured experiments
 
+**Subsequent integration:** after checkpoint commit `2c53487`, the user authorized integrating and
+testing the existing application. The optional Semaphore SDK/relayer module is now implemented;
+see [guide](docs/semaphore.md) and [integration validation](docs/semaphore-validation.md). The
+spike results and "not integrated" statements below are retained as historical evidence.
+
 17 October 2026 (IST). Branch `zk-feasibility`, baseline `6123164`. The existing application was audited by reading only; it was never run, installed, built or tested. New experiments live under `spikes/s1-*` through `spikes/s8-*`, each with a separate exact-version manifest/lockfile. No existing signing key was used. A fresh testnet key was generated only in gitignored `spikes/.env`. No push or commit was made.
 
 **Recommendation: build a single-relayer Semaphore membership MVP with admin-approved synthetic members; defer proof-based joining.** Semaphore, browser proving, virtual passkey PRF and Anon Aadhaar test proving work. After the user funded the fresh test account with **10 testnet GLM**, the live Arkiv group/post, readonly, historical root, ownership-transfer, adversarial-reader and HTTP-relayer tests passed on Node **22.23.3**. Follow-up risk tests then demonstrated invalid-nullifier preemption, a malformed-input process crash, loss of uncertain reservations on restart, deletion changing the canonical duplicate, and duplicate admission by two relayers. These findings require fixes before integration is accepted. See [ZK_RISK_TESTS.md](ZK_RISK_TESTS.md) for measurements and exact failures. The architecture is feasible; the research endpoint is not production ready.

@@ -1,5 +1,6 @@
 // Relayer HTTP API (spec/SPEC.md). No request logging, no IP logging (R7).
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
+import { readFileSync } from "node:fs"
 import { ExpirationTime } from "@arkiv-network/sdk"
 import {
   API_VERSION,
@@ -24,6 +25,7 @@ import { type BatchHooks, type BatchItem, Batcher } from "./batcher"
 import type { RelayerConfig } from "./config"
 import { Heartbeat } from "./heartbeat"
 import { Keeper } from "./keeper"
+import { SemaphoreGate, membershipHttpStatus } from "./semaphore"
 
 /** Hook for token redemption (Phase 4). Returns fields to add to the batch item, or throws to refuse. */
 export type TokenGate = {
@@ -154,11 +156,25 @@ class RateLimiter {
 export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: TokenGate) {
   const log = (m: string) => console.log(`[${cfg.name}] ${m}`)
   const writer = new WriteQueue()
+  const membershipGate = cfg.semaphoreGroupsFile
+    ? new SemaphoreGate(arkiv, JSON.parse(readFileSync(cfg.semaphoreGroupsFile, "utf8")), cfg.semaphoreJournal, cfg.semaphoreHistoryBlocks, cfg.semaphoreTrustedRelayers)
+    : undefined
+  const hooks: BatchHooks = {
+    beforeWrite: async items => {
+      const tokenChecked = gate?.hooks.beforeWrite ? await gate.hooks.beforeWrite(items) : { keep: items, reject: [] }
+      const memberChecked = membershipGate?.hooks.beforeWrite ? await membershipGate.hooks.beforeWrite(tokenChecked.keep) : { keep: tokenChecked.keep, reject: [] }
+      return { keep: memberChecked.keep, reject: [...tokenChecked.reject, ...memberChecked.reject] }
+    },
+    afterWrite: async (items, statuses) => {
+      await gate?.hooks.afterWrite?.(items, statuses)
+      await membershipGate?.hooks.afterWrite?.(items, statuses)
+    },
+  }
   const batcher = new Batcher(
     arkiv,
     writer,
     { minBatch: cfg.minBatch, maxBatch: cfg.maxBatch, maxWaitMs: cfg.maxWaitMs, minIntervalBlocks: cfg.minIntervalBlocks, coverMinBatch: cfg.coverMinBatch, evil: cfg.evil, log },
-    gate?.hooks,
+    hooks,
   )
   const limiter = new RateLimiter(cfg.ratePerMinute)
   const keeper = cfg.keeper ? new Keeper({ address: arkiv.address, reader: arkiv.publicClient as never, log }) : undefined
@@ -181,6 +197,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
     ohttpKey: gateway?.publicKey,
     coverMinBatch: cfg.coverMinBatch || undefined,
     keeper: keeper ? true : undefined,
+    semaphoreGroups: membershipGate?.keys,
   })
 
   /** The API itself, shared by direct HTTP and by requests unwrapped from OHTTP. */
@@ -204,11 +221,13 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
         }
       }
       if (method === "POST" && path === "/v1/records") {
-        if (!cfg.requireTokens && !source.ohttp && source.ip && !limiter.allow(source.ip)) throw new HttpError(429, "too many requests")
+        if ((!cfg.requireTokens || membershipGate) && !source.ohttp && source.ip && !limiter.allow(source.ip)) throw new HttpError(429, "too many requests")
         if (batcher.queue.length >= cfg.maxQueue) throw new HttpError(503, "queue is full; try another relayer")
         const req = body as SubmitRequest
         const item = await validateSubmission(req, arkiv.address, cfg)
-        if (cfg.requireTokens) {
+        const memberAuthorized = membershipGate ? await membershipGate.authorize(req, item) : false
+        if (!membershipGate && parseEnvelope(req.envelope).membership) throw new HttpError(403, "Semaphore is not configured")
+        if (cfg.requireTokens && !memberAuthorized) {
           if (!gate) throw new HttpError(500, "tokens required but no token gate configured")
           if (!req.token) throw new HttpError(402, "a rate-limit token is required")
           try {
@@ -236,7 +255,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
       }
       return { status: 404, body: { error: "not found" } }
     } catch (e) {
-      return { status: e instanceof HttpError ? e.status : 500, body: { error: (e as Error).message } }
+      return { status: e instanceof HttpError ? e.status : membershipHttpStatus(e) ?? 500, body: { error: (e as Error).message } }
     }
   }
 

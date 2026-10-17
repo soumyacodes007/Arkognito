@@ -57,6 +57,8 @@ export type StatusResponse = {
 }
 
 export type InfoResponse = {
+  /** Groups requiring a Semaphore proof in place of blind tokens. */
+  semaphoreGroups?: Hex[]
   address: Address
   version: string
   chainId: number

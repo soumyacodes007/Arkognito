@@ -61,3 +61,4 @@ export {
 export type { IssuerIdentity, StoredToken, TokenStore } from "./tokens.ts"
 export { discoverRelayers, heartbeatRelayers } from "./discovery.ts"
 export type { LiveRelayer } from "./discovery.ts"
+export type { SemaphoreOptions, SemaphoreGroup, Membership, MembershipReadResult, SemaphoreRules, MembershipVault } from "./semaphore.ts"

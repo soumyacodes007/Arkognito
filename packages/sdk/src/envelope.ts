@@ -17,6 +17,8 @@ import type { ArkognitoSigner } from "./vault.ts"
 import { BLOCK_TIME_SECONDS, ENVELOPE_VERSION, EXPIRY_BUCKETS, PAD_BUCKETS } from "./constants.ts"
 
 export type Envelope = {
+  /** Optional anonymous membership authorization; validated separately from the ownership signature. */
+  membership?: import("./semaphore.ts").Membership
   v: number
   app: string
   ct: string

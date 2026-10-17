@@ -1,5 +1,10 @@
 # Veil: follow-up tests of the risky assumptions
 
+**Subsequent integration:** user-authorized implementation now adds these controls to the actual
+Veil SDK and relayer. See [integration validation](docs/semaphore-validation.md). Earlier isolated
+prototype failures below remain unchanged evidence; the integration is an experimental MVP,
+not a production security certification.
+
 17 October 2026. These are separate experiments on branch `zk-feasibility`; existing application code was neither executed nor modified. This report supplements `ZK_FEASIBILITY.md`. All chain writes used fresh throwaway signing keys, synthetic data, Tiramisu chain **7738577**, and `https://rpc.tiramisu.db-chain.testnet.arkiv.network`. Node **22.23.3** was used throughout these follow-ups.
 
 **Conclusion: Semaphore on Arkiv works, but the research relayer and current-state replay policy have demonstrated correctness defects. Keep the MVP to one relayer, add durable admission/reconciliation and retained valid-nullifier history, and defer credential-based joining.** The tests below establish specific outcomes, not production readiness or existing Veil integration.

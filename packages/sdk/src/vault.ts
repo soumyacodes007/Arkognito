@@ -32,6 +32,8 @@ export type ArkognitoSigner = {
 export type NewKey = { ref: KeyRef; address: Address; tag: string }
 
 export interface Vault {
+  membershipCommitment?(group: import("./semaphore.ts").SemaphoreGroup): Promise<string>
+  proveMembership?(witness: import("./semaphore.ts").MembershipWitness): Promise<import("./semaphore.ts").SemaphoreProof>
   readonly app: string
   /** A fresh one-time key for a new record, with its encrypted tag. */
   newRecord(): Promise<NewKey>

@@ -9,6 +9,7 @@ import type { EvilMode } from "./config"
 import { coverFor } from "./cover"
 
 export type BatchItem = {
+  membership?: { id: string; group: import("arkognito/semaphore").SemaphoreGroup }
   id: string
   owner: Address
   envelope: string
@@ -31,6 +32,7 @@ export type BatchItem = {
 }
 
 export type BatchHooks = {
+  afterWrite?: (items: BatchItem[], statuses: Map<string, StatusResponse>) => Promise<void>
   /** Last check right before writing; returns the items still allowed (T4: spent list re-check). */
   beforeWrite?: (items: BatchItem[]) => Promise<{ keep: BatchItem[]; reject: { item: BatchItem; error: string }[] }>
 }
@@ -122,6 +124,7 @@ export class Batcher {
       for (const it of take) this.queue.splice(this.queue.indexOf(it), 1)
       await this.#write(shuffle(take))
     } catch (e) {
+      for (const it of take) if (!this.queue.includes(it)) this.#set(it.id, { state: "failed", error: `Write stopped: ${(e as Error).message}` })
       this.opts.log(`flush error: ${(e as Error).message}`)
     } finally {
       this.flushing = false
@@ -147,6 +150,11 @@ export class Batcher {
       batch = keep
     }
     if (batch.length === 0) return
+    const tooSmall = batch.filter(it => (it.minAnonymity ?? 1) > batch.length)
+    if (tooSmall.length) {
+      for (const it of batch) this.#set(it.id, { state: "failed", error: "Final batch cannot meet requested anonymity; not written" })
+      return
+    }
     const cover = this.opts.coverMinBatch ? await coverFor(batch, this.opts.coverMinBatch) : []
     if (cover.length) batch = shuffle([...batch, ...cover])
 
@@ -178,13 +186,16 @@ export class Batcher {
         })),
         ...side.map((c, j) => ({ ...c, salt: predicted[batch.length + j].salt })),
       ]
+      let sentHash: Hex | undefined
       try {
         const t0 = Date.now()
         const res = await this.arkiv.walletClient.executeBatch({
           creates,
           ownershipChanges: batch.map((it, i) => ({ entityKey: predicted[i].key, newOwner: ownerFor(it) })),
         })
+        sentHash = res.txHash
         const receipt = await withRetry(() => this.arkiv.publicClient.getTransactionReceipt({ hash: res.txHash }))
+        if (batch.some(it => it.membership) && (receipt.status !== "success" || res.createdEntities.length !== creates.length || res.createdEntities.some((key, i) => key.toLowerCase() !== predicted[i].key.toLowerCase()))) throw new Error("Membership receipt reconciliation required")
         this.lastFlushBlock = receipt.blockNumber
         this.batches++
         if (this.opts.evil === "ghost") {
@@ -203,9 +214,16 @@ export class Batcher {
             block: receipt.blockNumber.toString(),
           })
         })
+        try { await this.hooks.afterWrite?.(batch, this.status) } catch {
+          this.opts.log("Write confirmed; admission checkpoint failed. Reservations retained; operator reconciliation required.")
+        }
         this.opts.log(`batch ${this.batches}: ${batch.length} record(s)${covers ? ` (${covers} cover)` : ""} + ${side.length} marker(s) in ${Date.now() - t0} ms, tx ${res.txHash}`)
         return
       } catch (e) {
+        if (batch.some(it => it.membership)) {
+          for (const it of batch) if (!it.cover) this.#set(it.id, { state: "failed", txHash: (e as { txHash?: Hex }).txHash ?? sentHash, error: "Membership write outcome uncertain; reservation retained. Reconcile before retrying." })
+          return
+        }
         if (attempt < 4 && isStalePrediction(e)) {
           this.opts.log(`stale key prediction, re-predicting (attempt ${attempt})`)
           continue

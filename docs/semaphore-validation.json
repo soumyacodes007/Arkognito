@@ -1,0 +1,120 @@
+{
+  "started": "2026-10-17T09:56:22.867Z",
+  "runtime": "v22.23.3",
+  "project": "veil-sdk-1792230982867",
+  "checks": [
+    "Tiramisu chain",
+    "throwaway account funded",
+    "self-hosted wasm digest",
+    "self-hosted zkey digest",
+    "confirmed native transaction",
+    "empty groups cannot authorize proofs",
+    "confirmed native transaction",
+    "SDK proof-gated write and fresh owner",
+    "lost acknowledgement recovers and verifies without resending",
+    "confirmed native transaction",
+    "SDK recovery and decryption",
+    "SDK ownership challenge",
+    "readonly membership record",
+    "malformed null returns 400",
+    "valid replay returns 409",
+    "fake proof returns 400",
+    "membership-required project rejects missing proof",
+    "owner substitution rejected",
+    "independent SDK reader accepts valid proof",
+    "browser worker proof, relay and decryption",
+    "browser recovered commitment matches admitted identity",
+    "confirmed native transaction",
+    "independent reader sees both SDK clients",
+    "confirmed native transaction",
+    "receipt chronology selects first valid nullifier",
+    "confirmed native transaction",
+    "deletion preserves spent state without promoting duplicate",
+    "confirmed native transaction",
+    "historical group remains unchanged after append",
+    "confirmed native transaction",
+    "expiry preserves spent state without promoting duplicate",
+    "testnet fees reconcile"
+  ],
+  "receipts": [
+    {
+      "hash": "0x3c287932104250483e30743aec16ce56e78790cb9eb43659a934f97520e6e984",
+      "block": "690613",
+      "feeWei": "92448000184896"
+    },
+    {
+      "hash": "0x15dc8e120b9ae1300109bf4419f42cf67f782d248d3a4cf9e523646e5da92122",
+      "block": "690619",
+      "feeWei": "316392000632784"
+    },
+    {
+      "hash": "0x9d8f0d7dccabb5786c9ccca1579ea8ec3b96657710939478a4ce9661df6eda76",
+      "block": "690630",
+      "feeWei": "231080000462160"
+    },
+    {
+      "hash": "0xc83b20884da90a4c9c958d0cb43d0cbe0ed91b47725f2e7861f70d6db2c0fb02",
+      "block": "690654",
+      "feeWei": "231050000462100"
+    },
+    {
+      "hash": "0xe65a9fd0e7e50b557dc867654f2e2a07f5d38328576ae0820a54734751ba85e7",
+      "block": "690666",
+      "feeWei": "425320000850640"
+    },
+    {
+      "hash": "0x1a50a9cfd91034467e54168b22da282809fd82ab4ca2e41cc83f1774b0232bc4",
+      "block": "690673",
+      "feeWei": "24510000049020"
+    },
+    {
+      "hash": "0xcbbcb6673d86ac8553acb244995395fa7cb39a31ed5f9a40593b444a46ca4af5",
+      "block": "690682",
+      "feeWei": "105464000210928"
+    },
+    {
+      "hash": "0xcdc695726514c2b6f00e256ae1fa44393cb5563ef1deb110b4b0d8599bc2ae1e",
+      "block": "690688",
+      "feeWei": "425230000850460"
+    }
+  ],
+  "group": {
+    "project": "veil-sdk-1792230982867",
+    "admin": "0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD",
+    "key": "0xfffb1709a1fbd31bcb52c4c9e69f635d7287c01cdf7b44f40d7afa772d67d76c",
+    "fromBlock": "690613"
+  },
+  "nodeWriteMs": 23830.971800000003,
+  "browserVersion": "154.0.8037.100",
+  "browserWriteMs": 28856.5,
+  "totalFeeWei": "1851494003702988",
+  "verdict": "PASS",
+  "temporaryFrontendRemoved": true,
+  "versions": {
+    "arkiv": "0.8.1",
+    "viem": "2.57.4",
+    "semaphore": "4.14.4",
+    "playwright": "1.64.1",
+    "vite": "8.3.4"
+  },
+  "integrationRunCount": 4,
+  "integrationTransactionCount": 23,
+  "allIntegrationFeesGlm": "0.005537762011075524",
+  "latestFeesGlm": "0.001851494003702988",
+  "npmAudit": {
+    "moderate": 4,
+    "high": 9,
+    "critical": 0
+  },
+  "offlineTests": {
+    "runtime": "v22.23.3",
+    "passed": 46,
+    "failed": 0
+  },
+  "builds": {
+    "sdk": true,
+    "typecheck": true,
+    "existingDemo": true,
+    "compiledImports": true
+  }
+}

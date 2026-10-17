@@ -161,6 +161,20 @@ function signatureFingerprint(sig: Hex): string {
  * The root is in a private field: nothing outside this class can read it.
  */
 export class KeyVault implements Vault {
+  /** Domain-separated per app/group; the identity secret never leaves this vault. */
+  async membershipCommitment(group: import("./semaphore.ts").SemaphoreGroup): Promise<string> {
+    return (await this.membershipIdentity(group)).commitment
+  }
+
+  async proveMembership(witness: import("./semaphore.ts").MembershipWitness): Promise<import("./semaphore.ts").SemaphoreProof> {
+    return (await this.membershipIdentity(witness.snapshot.group)).prove(witness)
+  }
+
+  private async membershipIdentity(group: import("./semaphore.ts").SemaphoreGroup) {
+    const { createSemaphoreIdentity, membershipDomain } = await import("./semaphore.ts")
+    const secret = hkdf(sha256, this.#root, undefined, enc.encode(`arkognito/semaphore/v1/${this.app}/${membershipDomain(group)}`), 32)
+    try { return createSemaphoreIdentity(secret) } finally { secret.fill(0) }
+  }
   readonly #root: Uint8Array
   readonly app: string
   readonly mode: "signature" | "random" | "passkey"

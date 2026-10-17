@@ -31,3 +31,32 @@ Readers check `recover(sig) == $owner` and that `$expiresAt - $createdAt` matche
 | Today's issuer key (T1) | `project = str('arkognito-7f3k') AND type = str('arkognito.issuerKey') AND app = str(<app>) AND epoch = <day>` created by the issuer; more than one result means equivocation |
 | Token already spent (T4) | `project = str('arkognito-7f3k') AND type = str('arkognito.spent') AND tokenid = bytes32(<id>)` |
 | Live relayers (R8) | `project = str('arkognito-7f3k') AND type = str('arkognito.relayer')`; trust only each entity's `$creator` |
+
+## Optional Semaphore v1 entities
+
+All fixtures are synthetic. Public commitments derive from random/private vault roots, never
+personal credentials. Group descriptors identify a trusted admin, project, key and creation block.
+
+| Entity | Attributes | Payload | Creator / flags / lifetime |
+|---|---|---|---|
+| Group | `project: str`, `type: str('veil.group')` | `{version:1,chainId:7738577,depth,minMembers,maxRootAgeBlocks,scope}` | Allowlisted admin; readonly; caller-chosen lifetime |
+| Member | `project: str`, `type: str('veil.member')`, `group: str(groupKey)`, `memberindex: i32`, `commitment: u256` | `{version:1}` | Same admin; readonly; caller-chosen lifetime |
+| Authorized app record | Original app attributes plus `project`, `vtag`, `zkgroup: str`, `zkscope: str`, `zknullifier: str`, `zkroot: str`, `zkblock: u64` | Original signed/padded envelope plus `membership:{group,rootBlock,proof}` | Trusted relayer creates and transfers to fresh owner in one batch; readonly; normal expiry bucket |
+
+The proof contains depth, decimal root/nullifier/message/scope and eight curve-point coordinates.
+Scope and message are domain-separated SHA-256 digests encoded as decimal integers. Group scopes
+are fixed poll IDs or block-number windows, according to immutable rules. See
+[`docs/semaphore.md`](../docs/semaphore.md) and exported `membershipMessage`/`semaphoreScope` for the
+exact canonical encoding. The five `zk*` attributes are reserved and count toward the 32 limit.
+
+Queries pin `.atBlock(snapshot)` and walk every page at 200/page. Group lookup uses
+`project = str(project) AND $key = key(groupKey)` with `.createdBy(admin)`. Members use project,
+`type = str('veil.member')`, and `group = str(groupKey)` with `.createdBy(admin)`; sort contiguous
+`memberindex` values in JS. Posts use project, `zkgroup`, optionally `zkscope` or `zknullifier`,
+and the trusted relayer creator. Native creation logs plus authenticated receipts recover each
+publication at its creation block. Canonical valid nullifiers use block/transaction/log order;
+deleted or expired winners remain spent and do not promote duplicates.
+
+The SDK's independent reader fails closed when required history is unavailable or budgets are
+exhausted. It relies on the provider for complete logs/state. Admission journals, credential proofs,
+credential-derived nullifiers, roots/secrets and user-to-wallet mappings are never published.

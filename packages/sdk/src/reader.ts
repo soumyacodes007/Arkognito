@@ -134,6 +134,7 @@ export async function listApp(client: ArkivReader, project: string, relayers: re
 
 /** A record fetched with every field verification needs. */
 export type FullRecord = {
+  creationFlags?: Entity["creationFlags"]
   key: Hex
   owner: Address
   creator: Address
@@ -162,7 +163,7 @@ export async function fetchBatches(
     let atBlock: bigint | undefined
     do {
       const page = await client.query(q, {
-        select: { key: true, owner: true, creator: true, payload: true, attributes: true, createdAt: true, expiresAt: true },
+        select: { key: true, owner: true, creator: true, payload: true, attributes: true, createdAt: true, expiresAt: true, creationFlags: true },
         limit: 200,
         cursor,
         atBlock,
@@ -187,7 +188,7 @@ export async function fetchProject(client: ArkivReader, project: string, atBlock
   let block = atBlock
   do {
     const page = await client.query(q, {
-      select: { key: true, owner: true, creator: true, payload: true, attributes: true, createdAt: true, expiresAt: true },
+      select: { key: true, owner: true, creator: true, payload: true, attributes: true, createdAt: true, expiresAt: true, creationFlags: true },
       limit: 200,
       cursor,
       atBlock: block,

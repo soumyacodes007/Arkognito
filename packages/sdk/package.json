@@ -1,7 +1,7 @@
 {
   "name": "arkognito",
   "version": "0.1.0",
-  "description": "Unlinkable ownership for Arkiv: records owned by fresh per-record addresses, written through an open relayer",
+  "description": "Privacy tools for Arkiv: separate record owners, encrypted records and optional anonymous membership",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -9,11 +9,16 @@
       "arkognito-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./semaphore": {
+      "arkognito-source": "./src/semaphore.ts",
+      "types": "./dist/semaphore.d.ts",
+      "default": "./dist/semaphore.js"
     }
   },
   "peerDependencies": {
     "@arkiv-network/sdk": "0.8.1",
-    "viem": "^2.57.4"
+    "viem": "2.57.4"
   },
   "dependencies": {
     "@cloudflare/blindrsa-ts": "0.4.6",
@@ -21,17 +26,21 @@
     "@hpke/dhkem-x25519": "1.8.0",
     "@noble/ciphers": "2.4.0",
     "@noble/curves": "1.9.1",
-    "@noble/hashes": "2.4.0"
+    "@noble/hashes": "2.4.0",
+    "@semaphore-protocol/group": "4.14.4",
+    "@semaphore-protocol/identity": "4.14.4",
+    "@semaphore-protocol/proof": "4.14.4"
   },
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "src",
     "README.md",
+    "SEMAPHORE.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node scripts/fix-worker-url.mjs",
+    "build": "tsc -p tsconfig.build.json && node scripts/fix-worker-url.mjs && node scripts/copy-docs.mjs",
     "prepack": "npm run build"
   },
   "repository": {

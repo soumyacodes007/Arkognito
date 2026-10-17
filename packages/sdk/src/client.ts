@@ -6,7 +6,8 @@ import { assertNodeSafeNames, toWire } from "./attrs.ts"
 import { type CheckWarning, checkRarity, checkRecord } from "./check.ts"
 import { type DeterminismMode, type DeterminismStore, KeyVault, type SigningWallet, scopeRef } from "./derive.ts"
 import { heartbeatRelayers } from "./discovery.ts"
-import { envelopeDigest, expiryBucket, expirySeconds, fromBase64, sealEnvelope } from "./envelope.ts"
+import { envelopeDigest, expiryBucket, expirySeconds, fromBase64, toBase64, padEnvelope, parseEnvelope, sealEnvelope } from "./envelope.ts"
+import type { SemaphoreOptions, SemaphoreGroup, Membership } from "./semaphore.ts"
 import { sealInbox } from "./inbox.ts"
 import type { PasskeyOptions } from "./passkey.ts"
 import { type InnerResponse, ohttpCall } from "./ohttp.ts"
@@ -56,6 +57,8 @@ export type MyRecord = VerifiedRecord & {
 export type TokenSource = { take(app: string, relayer: InfoResponse): Promise<TokenRedemption | undefined> }
 
 export type PrivateClientOptions = {
+  /** Optional anonymous group authorization. Import admin/reader helpers from arkognito/semaphore. */
+  semaphore?: SemaphoreOptions
   app: string
   /** Value of the `project` attribute on this app's records. Defaults to `app`. */
   project?: string
@@ -146,7 +149,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const lower = (a: string) => a.toLowerCase()
 const dec = new TextDecoder()
 
-export class ArkognitoError extends Error {}
+export class ArkognitoError extends Error {
+  txHash?: Hex
+  requestId?: string
+  nullifier?: string
+}
 
 export async function createPrivateClient(opts: PrivateClientOptions) {
   const app = opts.app
@@ -250,7 +257,7 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
   let tokenSource: TokenSource | undefined = typeof opts.tokens === "object" ? opts.tokens : undefined
   const issuing = relayers.find((r) => r.info?.tokensRequired && r.info.issuer && r.info.issuerUrl)?.info
   const tokenIdentity = opts.tokenIdentity ?? "derived"
-  if (!tokenSource && (opts.tokens ?? "auto") === "auto" && issuing && (tokenIdentity === "derived" || opts.wallet)) {
+  if (!opts.semaphore && !tokenSource && (opts.tokens ?? "auto") === "auto" && issuing && (tokenIdentity === "derived" || opts.wallet)) {
     const tw = new TokenWallet({
       ...(tokenIdentity === "derived" ? { identity: vault } : { wallet: opts.wallet }),
       reader,
@@ -423,6 +430,21 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
     warnings: CheckWarning[],
   ): Promise<ArkognitoCreateResult> {
     const attributes: AttributeInputs = { ...params.attributes, project, vtag: key.tag }
+    let membership: Membership | undefined
+    if (opts.semaphore) {
+      const zk = await import("./semaphore.ts")
+      if (opts.semaphore.group.project !== project) throw new ArkognitoError("Semaphore group project must match the app project")
+      if (!vault.proveMembership) throw new ArkognitoError("This custom vault does not support Semaphore")
+      if (zk.ZK_ATTRIBUTES.some(k => k in attributes)) throw new ArkognitoError("zk* membership attributes are reserved")
+      const snapshot = await zk.createSemaphoreReader(reader as unknown as import("./semaphore.ts").SemaphoreReader, opts.semaphore.group, { trustedRelayers: relayerAddresses() }).getSnapshot()
+      const scope = zk.semaphoreScope(snapshot.group, snapshot.rules, BigInt(snapshot.block))
+      const unsigned = { v: 1, app, ct: params.contentType, exp: expSeconds, enc: key.encrypted ? 1 as const : 0 as const, data: toBase64(key.payload) }
+      const message = zk.membershipMessage(snapshot.group, snapshot.block, scope, key.owner, unsigned, attributes)
+      const proof = await vault.proveMembership({ snapshot, scope, message, snarkArtifacts: opts.semaphore.snarkArtifacts })
+      membership = { group: snapshot.group.key, rootBlock: snapshot.block, proof }
+      Object.assign(attributes, zk.membershipAttributes(membership))
+      if (Object.keys(attributes).length > 32) throw new ArkognitoError("Membership records reserve five attributes; total exceeds 32")
+    }
     try {
       assertNodeSafeNames(attributes)
     } catch (e) {
@@ -431,19 +453,35 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
     const signer = key.signer
     const expectSigner = key.inbox ? signer.address : undefined
     const sealed = await sealEnvelope({ signer, app, payload: key.payload, contentType: params.contentType, attributes, expSeconds, encrypted: key.encrypted })
+    if (membership) {
+      sealed.envelope.membership = membership
+      const { pad: _padding, ...body } = sealed.envelope
+      sealed.text = padEnvelope(body)
+    }
     const [lo, hi] = opts.delayMs ?? [0, 20_000]
     await sleep(lo + Math.random() * Math.max(0, hi - lo))
 
     const failures: string[] = []
     const order = [...relayers.filter((r) => !r.bad && r.info), ...relayers.filter((r) => r.bad && r.info)]
     if (order.length === 0) throw new ArkognitoError("no relayer is reachable")
-    const done = (entity: FullRecord, r: Relayer | undefined, s?: StatusResponse, recovered = false): ArkognitoCreateResult => {
+    const done = async (entity: FullRecord, r: Relayer | undefined, s?: StatusResponse, recovered = false): Promise<ArkognitoCreateResult> => {
+      if (membership && opts.semaphore) {
+        const zk: typeof import("./semaphore.ts") = await import("./semaphore.ts")
+        const envelope = parseEnvelope(entity.payload)
+        const actual = envelope.membership
+        zk.assertMembership(actual)
+        if (!entity.creationFlags?.readonly) throw new ArkognitoError("Membership record was not created readonly")
+        const snapshot = await zk.createSemaphoreReader(reader as unknown as import("./semaphore.ts").SemaphoreReader, opts.semaphore.group, { trustedRelayers: relayerAddresses() }).getSnapshot(BigInt(actual.rootBlock))
+        await zk.verifyMembership({ group: opts.semaphore.group, snapshot, membership: actual, owner: key.owner, envelope, attributes: entity.attributes!, atBlock: entity.createdAt })
+      }
       if (listing) listing.entries.push({ key: entity.key, owner: entity.owner, creator: entity.creator, createdAt: entity.createdAt, attributes: entity.attributes, tag: key.tag })
       return { entityKey: entity.key, owner: key.owner, txHash: s?.txHash, relayer: r?.url ?? "", batchSize: s?.batchSize, cover: s?.cover, recovered, warnings }
     }
     for (const r of order) {
+      let knownStatus: StatusResponse | undefined
       try {
-        const token = await tokenSource?.take(app, r.info!)
+        if (membership && !r.info?.semaphoreGroups?.some(g => lower(g) === lower(membership!.group))) throw new ArkognitoError("Relayer does not accept this Semaphore group")
+        const token = membership ? undefined : await tokenSource?.take(app, r.info!)
         const minAnonymity = opts.minAnonymity && opts.minAnonymity > 1 ? opts.minAnonymity : undefined
         const status = await submitAndWait(r, {
           app,
@@ -456,10 +494,12 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
           maxHoldMs: minAnonymity ? (opts.maxHoldMs ?? 10 * 60_000) : undefined,
           ...(key.inbox ? { inbox: true } : {}),
         })
+        knownStatus = status
         if (status.state !== "written" || !status.entityKey || !status.block) {
           // R4: the relayer may have written it and then failed to say so. Check before retrying elsewhere.
           const landed = await findOwn(key.tag, key.owner, expectSigner)
-          if (landed) return done(landed, undefined, undefined, true)
+          if (landed) return await done(landed, undefined, status, true)
+          if (membership) throw Object.assign(new ArkognitoError(status.error ?? "Membership inclusion uncertain; reservation retained"), { txHash: status.txHash, requestId: status.id })
           failures.push(`${r.url}: ${status.error ?? status.state}`)
           continue
         }
@@ -473,12 +513,15 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
         }
         const v = entity ? await verifyRecord(entity, { app, owner: key.owner, signer: expectSigner, relayers: [r.info!.address] }) : { ok: false as const, reason: "record is not in the batch the relayer named" }
         if (!v.ok) {
+          if (membership) throw new ArkognitoError(`Membership record verification failed: ${v.reason}`)
           r.bad = true
           failures.push(`${r.url} misbehaved: ${v.reason}`)
           continue
         }
-        return done(entity!, r, status)
+        return await done(entity!, r, status)
       } catch (e) {
+        // A lost response is not permission to publish again, even at another relayer.
+        if (membership) throw Object.assign(new ArkognitoError(`Semaphore submission stopped; reconcile before retrying: ${(e as Error).message}`), { txHash: (e as ArkognitoError).txHash ?? knownStatus?.txHash, requestId: (e as ArkognitoError).requestId ?? knownStatus?.id, nullifier: membership.proof.nullifier })
         failures.push(`${r.url}: ${(e as Error).message}`)
       }
     }
@@ -553,6 +596,17 @@ export async function createPrivateClient(opts: PrivateClientOptions) {
     /** How the last `myEntities()` fetched payloads: "all" (the whole app) or "batches" (yours plus cover). */
     lastReadMode: () => lastRead,
     proveOwnership,
+    /** Public random-secret commitment only. No main-wallet signature or root leaves the vault. */
+    membershipCommitment: async (group: SemaphoreGroup = opts.semaphore?.group!) => {
+      if (!group || !vault.membershipCommitment) throw new ArkognitoError("Pass a group and a Semaphore-capable vault")
+      return vault.membershipCommitment(group)
+    },
+    /** Independent proof/history reader; provider failures throw rather than silently omitting posts. */
+    readPosts: async () => {
+      if (!opts.semaphore) throw new ArkognitoError("Configure a Semaphore group first")
+      const { createSemaphoreReader } = await import("./semaphore.ts")
+      return createSemaphoreReader(reader as unknown as import("./semaphore.ts").SemaphoreReader, opts.semaphore.group, { trustedRelayers: relayerAddresses() }).readPosts()
+    },
     check,
     checkRarity: rarity,
     /** The key a scope's records are owned by, for sharing it on purpose. */

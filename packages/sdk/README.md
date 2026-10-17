@@ -1,8 +1,17 @@
 # arkognito
 
-Unlinkable ownership for [Arkiv](https://arkiv.network): each record is owned by a fresh one-time
-address derived from your wallet and written by a shared relayer, so nobody can group records by
-person, while you can still find and prove your own.
+Privacy tools for [Arkiv](https://arkiv.network): each record can use a fresh owner address and a
+shared relayer to reduce wallet linkage, while you can still find and prove your own records.
+This does not guarantee complete anonymity; content, metadata, timing and network observations
+remain relevant.
+
+Optional anonymous permissions use `createPrivateClient({ ..., semaphore: { group } })`.
+Import `createSemaphoreGroup`, `addSemaphoreMembers`, `SemaphoreWriteQueue`, and
+`createSemaphoreReader` from `arkognito/semaphore`. See the repository's
+[Semaphore guide](./SEMAPHORE.md)
+for group administration, browser-worker proving, self-hosted artifacts, relayer configuration,
+independent verification and recovery constraints. Group membership and eligibility are distinct;
+credential adapters are optional and production Anon Aadhaar integration is not supplied.
 
 ```ts
 import { createPrivateClient } from "arkognito"

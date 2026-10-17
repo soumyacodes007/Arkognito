@@ -296,3 +296,46 @@ twice (two relayers passing in the same block).
 
 The wallet signature, the root key, any derived key, the link between a wallet and its `S`
 addresses, issuer private keys, relayer or relay logs, quota records and attestation codes.
+
+## 9. Optional Semaphore authorization v1
+
+The normal record API is retained. A padded envelope may contain `membership: {group,rootBlock,
+proof}`. The payload remains encrypted when `enc=1`. Its ownership signature covers the original
+envelope fields and all typed attributes, including five projections: `zkgroup`, `zkscope`,
+`zknullifier`, `zkroot`, `zkblock`. Membership records must be created readonly by a trusted relayer.
+
+`membershipDomain` is JSON of `["veil-membership-v1",7738577,project,lower(admin),lower(groupKey)]`.
+The per-group identity secret is 32-byte HKDF-SHA256 of the existing vault root with undefined salt
+and UTF-8 info `arkognito/semaphore/v1/` + app + `/` + membershipDomain. Secrets never leave the
+vault/worker. The commitment uses Semaphore v4's `new Identity(secret).commitment`.
+
+`scope` is decimal SHA-256 of JSON `[membershipDomain,["fixed",id]]` or
+`[membershipDomain,["window",decimal(floor(block/windowBlocks))]]`. `message` is decimal SHA-256 of
+JSON `[membershipDomain,rootBlock,scope,lower(owner),v,app,ct,exp,enc,data,canonicalAttributes(base)]`.
+`base` excludes exactly the five proof projections, avoiding a circular nullifier dependency;
+verification checks each projection's typed value separately. Canonical attribute encoding is the
+existing sorted JSON triples `[name,type,stringValue]`. Padding and ownership signatures are not
+part of the membership message, but the envelope ownership signature is separately verified.
+
+Group rules bind depth, minimum size (at least three), accepted root age in blocks and scope policy.
+Read admin-created readonly members at `rootBlock`, sort contiguous indexes, reject duplicate
+commitments, rebuild the root, and verify all proof fields. Never substitute current membership
+for unavailable historical membership. `rootBlock` must precede publication and satisfy age policy.
+
+`GET /v1/info` advertises `semaphoreGroups`. A configured group's project requires a valid proof
+on `POST /v1/records`, replacing blind tokens for that project only. Persist a nullifier reservation
+before queueing. Confirm it after a successful write; retain pending state after uncertainty or
+checkpoint failures. Return 400 for invalid proofs, 403 for missing/unconfigured membership,
+409 for confirmed replays, and 503 for pending reservations/unavailable verification. Normal 202
+and status polling are unchanged. Client errors retain known `txHash`, `requestId` and nullifier.
+Do not automatically resend or fail over a membership write. Membership batches never split or
+retry an uncertain wallet call. Synthetic covers cannot forge membership; requested batch size
+must be met by real submissions. Journal sharing coordinates one host, not arbitrary independent
+operators or cross-host consensus.
+
+Independent readers retain complete valid publication history. Sort authenticated native creation
+events by `(block,transactionIndex,logIndex)` and select the first valid nullifier for each group
+and scope. Invalid earlier proofs do not consume it. Expiry/deletion affects visibility, not spent
+status. RPC completeness/retention is an explicit dependency; outage is an error, never an empty
+successful feed. Admission eligibility and duplicate enrollment are application policies, not
+properties established by Semaphore. Real Aadhaar/email data and credential proofs stay off Arkiv.

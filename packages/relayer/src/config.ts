@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs"
 import { resolve } from "node:path"
-import type { Hex } from "viem"
+import type { Address, Hex } from "viem"
 
 // Load the repo-root .env when running locally; on a host the variables come from the environment.
 for (const p of [".env", "../../.env"]) {
@@ -51,6 +51,10 @@ export function loadConfig(overrides: Record<string, string | undefined> = {}) {
     requireTokens: (env.REQUIRE_TOKENS ?? "off") === "on",
     issuerAddress: env.ISSUER_WALLET_ADDRESS as Hex | undefined,
     issuerUrl: env.ISSUER_URL,
+    semaphoreGroupsFile: env.SEMAPHORE_GROUPS_FILE,
+    semaphoreJournal: env.SEMAPHORE_JOURNAL ?? "data/semaphore-admissions.jsonl",
+    semaphoreHistoryBlocks: num("SEMAPHORE_HISTORY_BLOCKS", 10000),
+    semaphoreTrustedRelayers: (env.SEMAPHORE_TRUSTED_RELAYERS ?? "").split(",").map(s => s.trim()).filter(Boolean) as Address[],
   }
 }
 

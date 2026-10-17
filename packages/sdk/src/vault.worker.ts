@@ -4,6 +4,8 @@ import { KeyVault } from "./derive.ts"
 import type { EnvelopeBody, IssuanceBody, KeyRef, ProofBody } from "./vault.ts"
 
 export type VaultRequest =
+  | { id: number; op: "membershipCommitment"; group: import("./semaphore.ts").SemaphoreGroup }
+  | { id: number; op: "proveMembership"; witness: import("./semaphore.ts").MembershipWitness }
   | { id: number; op: "fromSignature"; signature: `0x${string}`; app: string }
   | { id: number; op: "fromRecoveryCode"; code: string; app: string }
   | { id: number; op: "random"; app: string }
@@ -31,6 +33,8 @@ const need = () => {
 
 async function handle(req: VaultRequest): Promise<unknown> {
   switch (req.op) {
+    case "membershipCommitment": return need().membershipCommitment(req.group)
+    case "proveMembership": return need().proveMembership(req.witness)
     case "fromSignature":
       vault = KeyVault.fromSignature(req.signature, req.app)
       return null

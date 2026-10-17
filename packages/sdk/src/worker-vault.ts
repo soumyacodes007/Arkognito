@@ -17,6 +17,12 @@ type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void }
 type Payload<T> = T extends unknown ? Omit<T, "id"> : never
 
 export class WorkerVault implements Vault {
+  membershipCommitment(group: import("./semaphore.ts").SemaphoreGroup) {
+    return this.#call<string>({ op: "membershipCommitment", group })
+  }
+  proveMembership(witness: import("./semaphore.ts").MembershipWitness) {
+    return this.#call<import("./semaphore.ts").SemaphoreProof>({ op: "proveMembership", witness })
+  }
   #worker: Worker
   #seq = 0
   #pending = new Map<number, Pending>()

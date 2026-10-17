@@ -12,6 +12,7 @@
   "devDependencies": {
     "@arkiv-network/sdk": "0.8.1",
     "@types/node": "26.6.4",
+    "playwright": "1.64.1",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "viem": "2.57.4"
@@ -19,7 +20,9 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "build": "npm run build -w arkognito",
-    "test": "node --conditions=arkognito-source --import tsx --test packages/sdk/test/unit.test.ts packages/sdk/test/privacy.test.ts packages/relayer/test/cover.test.ts",
+    "test": "node --conditions=arkognito-source --import tsx --test --test-force-exit packages/sdk/test/unit.test.ts packages/sdk/test/privacy.test.ts packages/sdk/test/seal.test.ts packages/sdk/test/semaphore.test.ts packages/relayer/test/cover.test.ts packages/relayer/test/semaphore.test.ts",
+    "test:semaphore": "node --conditions=arkognito-source --import tsx --test --test-force-exit packages/sdk/test/semaphore.test.ts packages/relayer/test/semaphore.test.ts",
+    "test:semaphore:live": "tsx --conditions=arkognito-source tests/semaphore-live.ts",
     "test:phase2": "tsx --conditions=arkognito-source tests/phase2.ts",
     "test:phase3": "tsx --conditions=arkognito-source tests/phase3.ts",
     "test:phase4": "tsx --conditions=arkognito-source tests/phase4.ts",

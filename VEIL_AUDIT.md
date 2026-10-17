@@ -1,5 +1,10 @@
 # Veil / Arkognito static audit
 
+**Historical audit baseline.** Subsequent user-authorized implementation adds the optional Semaphore
+module to the SDK/relayer. See [integration guide](docs/semaphore.md) and
+[actual integration validation](docs/semaphore-validation.md). Findings below describe the original
+read-only audit and are not silently rewritten as claims about the new implementation.
+
 Date: 17 October 2026 (IST). Baseline commit: `612316429d8320fe7d30417ae505b1e24c9baf71`. Phase 1 used file reads, `rg`, Git status/log/diffs only. No existing repository code was executed, built, installed or tested. BUILT means implementation found, **not** runtime certification. Phase 2 experiments are separate under `spikes/`.
 
 The initial checkout was on `main` with modified SDK envelope/index/protocol/vault and relayer batcher/config/cover/server, plus untracked keeper/seal/shamir/seal-test files. These were included in this working-tree review and left intact. They are not all present in the baseline commit. Subsequent audit work is on `zk-feasibility`; nothing is pushed.

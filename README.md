@@ -6,7 +6,7 @@
 On Arkiv every entity records its `$owner` and `$creator`, and both are queryable. One query,
 `$owner = addr(<wallet>)`, lists everything a wallet ever wrote, in every app.
 
-Arkognito keeps each record owned by its user while making records impossible to group by person:
+Arkognito keeps each record owned by its user while reducing public wallet-based linkage:
 
 1. Your wallet signs one message. From it the SDK derives a private root key, in your browser, in a Web Worker.
 2. Each record gets its own one-time owner address `S`, from a fresh random key. The record carries
@@ -14,7 +14,7 @@ Arkognito keeps each record owned by its user while making records impossible to
 3. A shared relayer creates the record and hands ownership to `S` in the same transaction, so
    `$creator` is the relayer (shared by everyone) and `$owner` is used once.
 4. The relayer batches requests from many users, shuffles them, and pads every record to a fixed size.
-5. Rate limits use blind tokens: the relayer can enforce "N records per person per day" without
+5. Rate limits use blind tokens: the relayer can enforce quotas per issuance identity without
    learning who sent which record.
 6. Optionally, requests go through an Oblivious HTTP relay so the relayer never sees your IP.
 
@@ -39,6 +39,17 @@ See [docs/linkage-experiment.md](docs/linkage-experiment.md).
 Nothing depends on us: every service is open source, and all shared state lives on Arkiv.
 
 ## Use the SDK in an app
+
+**Anonymous group permissions are optional.** Configure `semaphore: { group }` on
+`createPrivateClient()` to authorize records with Semaphore v4 proofs instead of blind tokens for
+that project. The normal encryption, fresh owners, recovery and `myEntities()` continue to work.
+Import group administration and independent history verification from `arkognito/semaphore`.
+See [the complete Semaphore guide](docs/semaphore.md) for enrollment, relayer configuration,
+self-hosted artifacts, scope policies, trust boundaries and tests. Credential adapters such as
+Anon Aadhaar are optional admission integrations; they are not included as production verifiers.
+
+Veil does not guarantee complete anonymity. Public attributes, traffic, timing, small groups and
+relayer observations can identify users. Expiry/deletion cannot retract previously published data.
 
 ```bash
 npm install arkognito @arkiv-network/sdk@0.8.1 viem
