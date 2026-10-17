@@ -1,7 +1,8 @@
 # Veil / Arkognito
 
 Privacy infrastructure for user-owned records on [Arkiv](https://arkiv.network).
-The TypeScript package is **`arkognito`**; anonymous group permissions use **`arkognito/semaphore`**.
+The published TypeScript package is [**`arkognito@0.1.0`**](https://www.npmjs.com/package/arkognito/v/0.1.0);
+anonymous group permissions use **`arkognito/semaphore`**.
 
 Veil writes through shared relayers and gives each record a fresh owner address. Users can recover
 records and prove ownership without publishing their main-wallet-to-record mapping. Optional
@@ -33,8 +34,7 @@ enabled reject that mismatch. This dependency compatibility issue remains unreso
 npm install arkognito@0.1.0 @arkiv-network/sdk@0.8.1 viem@2.57.4
 ```
 
-The install command requires the npm release to be available. To use a source checkout or a prepared
-release before publication:
+To build a source checkout and create a local package instead:
 
 ```bash
 npm ci

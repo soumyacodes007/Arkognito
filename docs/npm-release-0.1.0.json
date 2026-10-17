@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-17T17:19:43.592Z",
+  "name": "arkognito",
+  "version": "0.1.0",
+  "tags": {
+    "latest": "0.1.0"
+  },
+  "tarball": "https://registry.npmjs.org/arkognito/-/arkognito-0.1.0.tgz",
+  "bytes": 134717,
+  "sha256": "e0d3e378b2dcdeb45b555965e42cf773e84eee62c22ad5aab30947b7911a9c9c",
+  "matchesTestedArtifact": true,
+  "integrity": "sha512-c0mnKDdL04nyNeMZ67mDyGjCbwQCd1mMSFXj+K4dyevx5yiyvZsOVLmq8CYRwOYDVdHM7WX79iCbjZds85Y/Kw==",
+  "peerDependencies": {
+    "viem": "2.57.4",
+    "@arkiv-network/sdk": "0.8.1"
+  },
+  "exports": [
+    ".",
+    "./semaphore"
+  ],
+  "publisher": "therick"
+}

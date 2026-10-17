@@ -1,6 +1,7 @@
 # arkognito 0.1.0 release checks
 
-17 October 2026. Release preparation for the first experimental npm package. No new chain writes
+17 October 2026. First experimental npm release, now publicly available as
+[`arkognito@0.1.0`](https://www.npmjs.com/package/arkognito/v/0.1.0). No new chain writes
 were made for these checks; the earlier 32-check live/browser evidence remains in
 [semaphore-validation.md](semaphore-validation.md).
 
@@ -30,7 +31,7 @@ The final tarball is **134,717 bytes**, with **119 entries**. SHA-256:
 All 118 non-README entries match the installed artifact tested above; the final README adds the
 observed engine-compatibility warning. No runtime code changed after consumer verification.
 
-## Actual warnings and blockers
+## Warnings and initial publishing failures
 
 - Node 22 clean installation emitted `EBADENGINE` for `@cloudflare/blindrsa-ts@0.4.6`, which declares
   Node `>=24`. The test suite passed on Node 22.23.3, but strict engine enforcement would reject
@@ -44,12 +45,27 @@ observed engine-compatibility warning. No runtime code changed after consumer ve
 - The actual publish attempt of the tested tarball was rejected with
   `E404 Not Found - PUT https://registry.npmjs.org/arkognito - Not found` and
   `The requested resource 'arkognito@0.1.0' could not be found or you do not have permission to access it.`
-  The account check also failed with `E401`; a valid npm login is needed before retrying. No npm
-  publication or version tag is claimed by this record.
+  The account check also failed with `E401`; that attempt did not publish a usable version.
+  The later authenticated publication is verified below.
 
-Code and documentation were fast-forwarded to their GitHub `main` branches after validation. This
-release remains prepared locally pending successful npm publication. Run `npm login` locally;
-never put registry credentials, OTPs or tokens in the repository or chat.
+The failures above describe the initial unauthenticated attempt. Authentication was subsequently
+completed through npm's official browser login and publish authentication. The CLI accepted the
+same tested tarball. npm's version history then showed `0.1.0` as **Validating** during automated
+review; the public registry temporarily exposed only a `0.0.0-stage` placeholder. The approval queue
+was empty, so the placeholder did not imply a pending maintainer approval.
+
+## Registry publication verified
+
+At **17:19:43 UTC**, the public registry served `arkognito@0.1.0` with `latest: 0.1.0`. Its downloaded
+tarball was **134,717 bytes** and its SHA-256 matched the tested artifact above exactly. Both root
+and `./semaphore` exports and the pinned peer dependencies were present. See
+[machine-readable verification](npm-release-0.1.0.json).
+
+Installed `arkognito@0.1.0` by registry name into the separate consumer, replacing its local-tarball
+dependency. The compiled import/recovery/proof/tamper/worker-URL smoke test passed again under
+Node 24.13.1. GitHub code and documentation were pushed to their `main` branches.
+
+Never put registry credentials, OTPs or tokens in the repository or chat.
 
 These checks do not establish an independent audit, production credential admission, mobile or
 physical-authenticator support, or safe dependency exploitability. See the README for scope.
