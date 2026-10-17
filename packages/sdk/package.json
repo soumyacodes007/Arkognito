@@ -45,12 +45,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/soumyacodes007/Arkognito"
+    "url": "git+https://github.com/soumyacodes007/Arkognito.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/soumyacodes007/Arkognito#readme",
+  "bugs": { "url": "https://github.com/soumyacodes007/Arkognito/issues" },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "keywords": [
     "arkiv",
     "privacy",
-    "stealth-address",
+    "semaphore",
+    "zero-knowledge",
     "blind-signatures",
     "golem"
   ],

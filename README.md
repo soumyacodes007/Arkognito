@@ -1,227 +1,239 @@
-# Arkognito: use Arkiv incognito
+# Veil / Arkognito
 
-> **Status: experimental, testnet only (Arkiv Tiramisu).** Version 0.x: the protocol may still change.
-> The cryptography has not had an outside audit yet.
+Privacy infrastructure for user-owned records on [Arkiv](https://arkiv.network).
+The TypeScript package is **`arkognito`**; anonymous group permissions use **`arkognito/semaphore`**.
 
-On Arkiv every entity records its `$owner` and `$creator`, and both are queryable. One query,
-`$owner = addr(<wallet>)`, lists everything a wallet ever wrote, in every app.
+Veil writes through shared relayers and gives each record a fresh owner address. Users can recover
+records and prove ownership without publishing their main-wallet-to-record mapping. Optional
+Semaphore proofs let approved group members submit without identifying which member submitted.
 
-Arkognito keeps each record owned by its user while reducing public wallet-based linkage:
+> Experimental, Tiramisu testnet only. Veil reduces wallet linkage; it does not provide complete
+> anonymity. Public metadata, content, timing, small groups and network observations can identify
+> users. No independent security audit has been performed. Use synthetic demo data only.
 
-1. Your wallet signs one message. From it the SDK derives a private root key, in your browser, in a Web Worker.
-2. Each record gets its own one-time owner address `S`, from a fresh random key. The record carries
-   the key's id encrypted to you, so only you can find your records again, from any device.
-3. A shared relayer creates the record and hands ownership to `S` in the same transaction, so
-   `$creator` is the relayer (shared by everyone) and `$owner` is used once.
-4. The relayer batches requests from many users, shuffles them, and pads every record to a fixed size.
-5. Rate limits use blind tokens: the relayer can enforce quotas per issuance identity without
-   learning who sent which record.
-6. Optionally, requests go through an Oblivious HTTP relay so the relayer never sees your IP.
+## What you can build
 
-You can still find all your records (`myEntities()`) and prove that one is yours (`proveOwnership()`).
+- Encrypted reporting and feedback with recoverable record ownership.
+- Member-only polls and public signals with one accepted submission per enrolled identity and scope.
+- Applications that separate public record ownership from a user's main wallet.
 
-Measured on Tiramisu with 5 users and 50 records, an outside observer linked records with 11–16 %
-precision, below the 20 % of random guessing. Without Arkognito an owner query links 100 %.
-See [docs/linkage-experiment.md](docs/linkage-experiment.md).
+Your application decides who joins. Semaphore proves membership, not citizenship, unique personhood
+or the truth of a report. Anon Aadhaar is an optional future admission integration; only its separate
+synthetic test proof was exercised. A combined credential adapter is not included. ZK Email is deferred.
 
-## What is in this repository
+## Install
 
-| Part | Path | For |
-| --- | --- | --- |
-| **SDK** (`arkognito` on npm) | `packages/sdk` | App builders: make writes private, find and prove your records |
-| **Relayer + token issuer** | `packages/relayer` | Anyone: run your own, or use someone else's |
-| **OHTTP relay** | `packages/relayer` (`ROLE=ohttp-relay`) | A different operator than the relayers |
-| **Docker Compose stack** | `docker-compose.yml`, `deploy/` | Self-hosting the whole network in one command |
-| Protocol spec | `spec/SPEC.md` | Writing a compatible client or relayer |
-| Edge cases | `docs/edge-cases.md` | Every known edge case, its status and the test that shows it |
-| Demo | `apps/demo` | Arkiv's Sketch App, public vs private, and an observer view |
+Use Node 22; the recorded integration ran on Node 22.23.3. Arkiv and viem are exact peer dependencies.
 
-Nothing depends on us: every service is open source, and all shared state lives on Arkiv.
-
-## Use the SDK in an app
-
-**Anonymous group permissions are optional.** Configure `semaphore: { group }` on
-`createPrivateClient()` to authorize records with Semaphore v4 proofs instead of blind tokens for
-that project. The normal encryption, fresh owners, recovery and `myEntities()` continue to work.
-Import group administration and independent history verification from `arkognito/semaphore`.
-See [the complete Semaphore guide](docs/semaphore.md) for enrollment, relayer configuration,
-self-hosted artifacts, scope policies, trust boundaries and tests. Credential adapters such as
-Anon Aadhaar are optional admission integrations; they are not included as production verifiers.
-
-Veil does not guarantee complete anonymity. Public attributes, traffic, timing, small groups and
-relayer observations can identify users. Expiry/deletion cannot retract previously published data.
+The pinned `@cloudflare/blindrsa-ts@0.4.6` declares Node `>=24`. A clean Node 22 install emits
+`EBADENGINE` even though the recorded Node 22 tests pass; installations with `engine-strict`
+enabled reject that mismatch. This dependency compatibility issue remains unresolved.
 
 ```bash
-npm install arkognito @arkiv-network/sdk@0.8.1 viem
+npm install arkognito@0.1.0 @arkiv-network/sdk@0.8.1 viem@2.57.4
 ```
+
+The install command requires the npm release to be available. To use a source checkout or a prepared
+release before publication:
+
+```bash
+npm ci
+npm run build
+npm pack --workspace=arkognito
+```
+
+Install the resulting `arkognito-0.1.0.tgz` alongside the pinned peers. The package is ESM.
+Browser bundlers must support module workers created with `new Worker(new URL(..., import.meta.url))`.
+The actual Vite worker flow passed the recorded integration.
+
+## Write, find and prove a record
+
+This Node example needs a running, funded local relayer. The client vault needs no gas. Preserve the
+recovery code privately if you want to recover after restarting; never publish or log it.
+
+```ts
+import { KeyVault, createPrivateClient } from "arkognito"
+
+const { vault, recoveryCode } = KeyVault.random("example-feedback")
+const veil = await createPrivateClient({
+  app: "example-feedback",
+  vault,
+  relayers: ["http://localhost:8787"],
+})
+
+const record = await veil.createEntity({
+  payload: new TextEncoder().encode("Synthetic feedback"),
+  contentType: "text/plain",
+  attributes: { type: "feedback" },
+  expires: 3600,
+  encrypt: true,
+})
+const mine = await veil.myEntities()
+const ownership = await veil.proveOwnership(record.entityKey, {
+  challenge: "verifier-issued-single-use-challenge",
+  verifier: "reviewer-1",
+})
+```
+
+In browsers use `await WorkerVault.random(app)` or restore with
+`WorkerVault.fromRecoveryCode(savedRecoveryCode, app)` to keep secrets inside a key worker.
+Wallet and passkey-PRF sign-in are also supported. Wallet mode checks deterministic signatures;
+passkeys need compatible browsers/authenticators and private recovery material. A hostile frontend
+can still request allowed operations and observe plaintext.
+
+## Anonymous group permissions with Semaphore
+
+An admin creates a readonly group and enrolls approved public commitments. Users derive commitments
+inside their own vaults; administrators never need user roots or recovery codes.
 
 ```ts
 import { createPrivateClient } from "arkognito"
 
-const ark = await createPrivateClient({ app: "my-app", wallet })              // wallet: viem or Arkiv SDK wallet client
-const { entityKey } = await ark.createEntity({ payload, contentType, attributes, expires })
-const mine = await ark.myEntities()                                            // all of your records, verified
-const proof = await ark.proveOwnership(entityKey, { challenge, verifier: "desk-1" })
+const commitment = await vault.membershipCommitment(group)
+// Send commitment through your app's admission process; it does not enroll itself.
+
+const veil = await createPrivateClient({
+  app: group.project,
+  vault,
+  publicClient: reader,
+  relayers: [relayerUrl],
+  semaphore: { group },
+})
 ```
 
-`createEntity` takes the same parameters as `@arkiv-network/sdk`'s `createEntity` (plus optional
-`scope` and `encrypt`). Relayers are found from their heartbeat entities on Arkiv; pass
-`relayers: [url, …]` to use your own, and `ohttpRelay: url` to hide your IP from them. When a
-relayer requires rate-limit tokens, the client fetches the day's tokens at session start.
-
-Connecting costs one wallet prompt. The first time a device sees a wallet for an app it asks
-twice, to check that the wallet signs deterministically (K1), and remembers a fingerprint of the
-signature in `localStorage`; after that it asks once. Tokens are requested by an identity derived
-from your root key, so they need no prompt and the issuer never sees your wallet.
-
-### No wallet? Sign in with a passkey
+Use normal `veil.createEntity(...)` after enrollment. The relayer checks the proof, historical root,
+intended owner, scope and signed record binding, then creates a readonly record and transfers
+ownership atomically. Configured projects require membership even when blind tokens are disabled;
+valid membership replaces token redemption for those projects.
 
 ```ts
-import { WorkerVault, createPrivateClient } from "arkognito"
+import { createSemaphoreReader } from "arkognito/semaphore"
 
-// Once: create a passkey. Show the recovery code to the user; it is the only backup.
-const { recoveryCode, credentialId } = await WorkerVault.createPasskey("my-app")
-// Every visit after: one biometric or PIN prompt, no wallet, no extension.
-const ark = await createPrivateClient({ app: "my-app", passkey: { credentialId } })
+const feed = createSemaphoreReader(reader, group, {
+  trustedRelayers: [knownRelayerWallet],
+  maxHistoryBlocks: 10000,
+})
+const { accepted, rejected, spent } = await feed.readPosts()
 ```
 
-The root comes from the passkey's WebAuthn PRF secret for this app, so it works for people with
-no wallet and for smart-contract wallets. Browsers or authenticators without PRF get a clear error.
+The earliest valid nullifier wins in block, transaction and log order. Deleted/expired winners
+remain spent. Verification grants no ciphertext decryption. Arkiv has no application smart
+contracts: relayers and readers verify proofs off-chain.
 
-### Write a record for someone else
+Read [the complete Semaphore guide](docs/semaphore.md) for administration, admission, artifact
+hosting, relayer configuration, historical verification and recovery.
 
-```ts
-const inbox = await alice.inboxAddress()          // Alice shares this string ("arkognito-inbox1:…")
-await bob.sendTo(inbox, { payload, contentType, attributes, expires })
-const mine = await alice.myEntities()             // with createPrivateClient({ …, inbox: true })
-```
+## How privacy works
 
-The record is owned by a one-time address only Alice controls, encrypted to her, and written by the
-relayer, so nothing on chain names Alice or Bob. Alice can read it and prove she owns it; Bob cannot.
-
-### Reads and small batches
-
-- Apps with up to 500 records (`fetchAllUnder`) are downloaded whole when you read your records,
-  so the RPC provider learns nothing about which are yours. Bigger apps fetch your batches plus
-  cover batches.
-- A relayer started with `COVER_MIN_BATCH=5` pads a lone **encrypted** record into a batch of 5 with
-  cover records nobody can tell apart from real ones. The result says how many were cover.
-
-Making Arkiv's MetaMask Sketch App private took 3 changed lines:
-compare [`apps/demo/src/store-public.ts`](apps/demo/src/store-public.ts) with
-[`store-private.ts`](apps/demo/src/store-private.ts).
-
-### Before you write
-
-- Attribute names must be lowercase (`minbatch`, not `minBatch`): the node rejects uppercase.
-- Lifetimes are rounded up to 1 hour, 1 day, 7 days, 30 days or 90 days; records are padded to
-  512 B, 1 KB, 4 KB or 16 KB. Both stop records standing out.
-- `ark.check({ attributes, expires, payload })` and every write warn about exact timestamps, precise
-  locations, postal codes, free text, and attribute values shared by fewer than 3 other records
-  (`rarityK`). `coarse.day/hour/geo/bucket` give you safer values; `strict: true` refuses such writes.
-- `minAnonymity: 5` makes the relayer hold a record until it can be written among at least 5,
-  or fail it, instead of writing it alone in a quiet hour.
-- Expiry hides a record from queries but does not erase it: the payload stays in the transaction
-  history. Use `encrypt: true` for anything private.
-- Writes take about 25–30 s on a busy relayer (batching is what hides you), up to about 90 s when
-  it is quiet. Show a "saving privately" state rather than a spinner.
-- Do not load third-party analytics or error reporters on pages that use Arkognito.
-
-## Self-host the infrastructure
-
-The whole network (two relayers, the token issuer and an OHTTP relay) in one command:
-
-```bash
-git clone https://github.com/soumyacodes007/Arkognito.git && cd Arkognito
-npm ci
-npm run setup                          # creates wallets + issuer seed in .env, prints addresses to fund
-OHTTP_ALLOW_LOCAL=on docker compose up -d
-```
-
-Fund the printed addresses at the [Tiramisu faucet](https://hub.arkiv.network/faucet). To put the
-demo online on Railway + Vercel, follow **[docs/deploy-railway-vercel.md](docs/deploy-railway-vercel.md)**. For a public
-deployment with HTTPS, Railway or Fly, running without Docker, the full configuration reference
-and operations notes, see **[docs/self-hosting.md](docs/self-hosting.md)**.
-
-Without Docker: `npm run build`, then `npm run relayer` (one relayer) or `npm run dev:relayers`
-(two relayers + issuer), and `npm run ohttp-relay`.
-
-With a relayer running, `node examples/quickstart.mjs` writes one private record with a throwaway
-wallet (no funds needed), finds it with `myEntities()`, and shows that an owner query on the wallet
-finds nothing.
-
-For a live demo, `npm run demo:crowd` runs synthetic users that save synthetic sketches through the
-live relayers (throwaway keys, no funds), so a demo save lands in a full shuffled batch. Start it about
-two minutes before recording: each new user's first token has to be 60 seconds old before it is spent.
-
-Every edge case we know of and how it is handled: [docs/edge-cases.md](docs/edge-cases.md).
-
-## Tests
-
-```bash
-npm test                 # unit tests, offline
-npm run typecheck
-npm run test:phase2      # SDK core on Tiramisu: 200 records, myEntities, tamper and wrong-owner relayers
-npm run test:phase3      # two relayers, failover, heartbeat expiry, linkage experiment (~6 min)
-npm run test:phase4      # blind tokens: quota, double spend, unlinkability, issuer equivocation
-npm run test:phase5      # Sketch App diff, check(), end to end (needs npm run dev:relayers)
-npm run test:issuer      # issuer quota across restarts, concurrent requests, double-spend monitor
-npm run test:privacy     # cover records, inbox (send to user), passkey users, download-all reads, on Tiramisu
-npm run test:passkey     # passkey roots in headless Chrome with a virtual PRF authenticator (needs npm run dev:demo)
-npm run test:edge        # edge-case sweep: read privacy, devices, encryption, crash recovery, minAnonymity, OHTTP, limits, attestation
-RELAYERS=https://a,https://b npm run test:popup   # wallet prompts at connect (2 first visit, 1 after), against live relayers
-```
-
-The on-chain tests need `RELAYER_1_PRIVATE_KEY`, `RELAYER_2_PRIVATE_KEY`, `ISSUER_WALLET_PRIVATE_KEY`,
-`ISSUER_RSA_SEED` (and `DEMO_USER_PRIVATE_KEY` for phase 5) in `.env`. Run them one at a time: they
-share relayer wallets. All test data is synthetic.
-
-## Repo
-
-```
-packages/sdk        arkognito: derivation, worker vault, envelope, client, check, proofs, tokens
-packages/relayer    relayer, batcher, heartbeat, token gate, issuer, OHTTP relay (start.ts picks the role)
-docker-compose.yml  the whole network: relay-1 + issuer, relay-2, OHTTP relay
-deploy/             HTTPS with Caddy
-scripts/setup.ts    npm run setup: wallets, issuer seed, addresses to fund
-apps/demo           public vs private Sketch App, observer view, wallet check
-spec/SPEC.md        protocol, so others can reimplement it
-arkiv/schema.md     entity types, attributes, lifetimes, the queries behind each claim
-arkiv/friction.md   reproducible Arkiv rough edges we hit
-docs/               self-hosting guide, edge-case register, linkage experiment
-spike/              the scripts that tested the design's assumptions on Tiramisu
-tests/              phase tests
-examples/           quickstart.mjs: plain Node, one private record end to end
-```
-
-## Threat model and limits
-
-| Who | Sees | Does not learn |
+| Layer | Purpose | Boundary |
 | --- | --- | --- |
-| Anyone reading Arkiv | all records, owners, creators, batches | which records belong to the same person |
-| Relayer | records, one-time owners, request times, IP addresses | which wallet sent which record |
-| Issuer | a per-app identity derived from your root key, how many tokens it took | your wallet, and which records those tokens paid for |
+| One-time owners | Fresh addresses and encrypted discovery tags | An explicit owner-sharing scope deliberately links records |
+| Shared relayer | Atomic create/transfer and gas payment | Sees request content/ciphertext, owner and timing |
+| Encryption | Owner-encrypted records and recipient inboxes | Attributes remain public; disclosed plaintext cannot be recalled |
+| Batching | Shuffling, envelope padding and lifetime buckets | Small batches and unusual attributes weaken privacy |
+| Blind tokens | Separate issuance from redemption | Quotas limit issuance identities, not unique people |
+| Optional OHTTP | Separate IP from request contents | Requires independent, non-colluding operators |
+| Optional Semaphore | Anonymous membership and scoped duplicate policy | Group, scope and nullifier are public; admission is app policy |
 
-Said plainly:
+`myEntities()` downloads shared listings and opens tags locally instead of sending an owner-address
+set to the RPC. Larger apps fetch whole relevant batches plus cover batches. `proveOwnership()` is
+an ordinary owner challenge proof, separate from a Semaphore membership proof.
 
-- Without `ohttpRelay`, the relayer sees IP addresses. With it, requests go through an Oblivious
-  HTTP relay (`npm run ohttp-relay`): the relay sees your IP but not the request, the relayer sees
-  the request but not your IP. That holds only if the two are run by different people.
-- Anonymity is as large as each batch. Set `minAnonymity` to refuse small batches, or run relayers
-  with `COVER_MIN_BATCH` so encrypted records are padded with cover; otherwise the client reports the
-  size it landed in. Cover only works for encrypted records, and the relayer knows which are cover.
-- Quotas are per (wallet, app) identity, and wallets are free, unless the issuer requires
-  attestation codes (`ISSUER_CODES_FILE`, for example codes handed out in person), which limit people
-  instead. An issuer that must see the wallet itself can be served with `tokenIdentity: "wallet"`.
-- The page that runs Arkognito can still ask the key worker for Arkognito signatures and ownership proofs.
-  The worker stops key leaks and arbitrary signing, not a hostile frontend.
-- Content can identify a person on its own. `check()` helps but cannot catch everything.
-- Records are create-only: `S` holds no gas, so it cannot patch, extend or delete. Updates are new records.
-- Smart-contract wallets cannot use signature mode; they, and people with no wallet, can use a passkey.
-  A passkey root is lost with the passkey, so creating one returns a recovery code.
-- An inbox record is recognisable as an inbox record (its envelope is not signed by its owner), but
-  not who it is for, who sent it or what it says.
+Synthetic cover is available for eligible ordinary encrypted records. Membership records cannot
+receive forged proof-bearing cover; minimum batch sizes need real valid submissions.
 
-## License
+Native Arkiv already supports creation and ownership transfer. Veil packages derivation, recovery,
+private discovery, relaying, verification and optional group authorization around those primitives.
 
-MIT
+## Run the services and demo
+
+```bash
+git clone https://github.com/soumyacodes007/Arkognito.git
+cd Arkognito
+npm ci
+npm run setup
+```
+
+Setup creates signing material in gitignored `.env` and prints public addresses. Fund required
+service addresses using the [Tiramisu faucet](https://hub.arkiv.network/faucet). Never commit keys
+or expose RPC access keys in browser bundles.
+
+```bash
+npm run build
+npm run dev:relayers
+```
+
+In another terminal, run `npm run dev:demo`. The existing Sketch App compares public/private writes
+and includes an observer view. Docker is also supported; see [self-hosting](docs/self-hosting.md),
+[deployment](docs/deploy-railway-vercel.md) and the [Node quickstart](examples/quickstart.mjs).
+Public relayers need HTTPS. No public relayer URL or production admission service is promised here.
+
+## Tests and measured evidence
+
+The recorded integration on 17 October 2026 passed **46 offline tests and 32 live/browser checks**.
+It exercised actual SDK/relayer calls, browser-worker proving, encrypted recovery, ownership transfer,
+readonly creation, historical membership, malformed requests, replay rejection and spent-state
+retention after deletion and actual expiry.
+
+| Observation | Recorded result |
+| --- | --- |
+| Node full write/recovery | 23,830.97 ms |
+| Browser full write/decryption | 28,856.50 ms, desktop headless Chrome |
+| Final eight-transaction gas | 0.001851494003702988 testnet GLM |
+| SDK build, typecheck, frontend build and compiled imports | Passed |
+
+Times include proving, RPC, transaction waits and readback. These are individual observations, not
+mobile or statistical benchmarks. The original synthetic linkage experiment used 50 records and
+five synthetic users; its results are workload-specific, not an anonymity guarantee.
+See [integration evidence](docs/semaphore-validation.md) and [linkage experiment](docs/linkage-experiment.md).
+
+```bash
+npm run build
+npm run typecheck
+npm test
+npm run build -w arkognito-demo
+```
+
+Opt-in `npm run test:semaphore:live` writes synthetic Tiramisu records using the isolated funded
+throwaway spike wallet. Stop other writers and run on-chain suites one at a time. Release checks
+can use the recorded live evidence without repeating funded transactions.
+
+## Operational limits
+
+- One process controls each signing wallet; reuse one writer queue for all its operations.
+- Persist the Semaphore journal. Uncertain writes and stale/corrupt journals require reconciliation;
+  automatic cross-relayer failover and uncertain batch retries stop.
+- Shared journals coordinate one host. Cross-host consensus and automatic repair are not implemented.
+- Membership verification requires complete native logs, receipts and historical state. Work budgets
+  are finite; long-lived apps need a durable authenticated index and retention policy.
+- Membership is append-only. Immediate revocation and automatic group/member renewal are not supplied.
+- One-time owners have no gas. The SDK supplies no sponsored update/delete/extension lifecycle;
+  membership records are readonly and edits require new records.
+- Expiry/deletion removes live state, not historical copies or transaction calldata.
+- The last recorded dependency audit found 13 advisories (4 moderate, 9 high), without an exploitability
+  assessment. Undiagnosed socket-listener warnings and proving-worker shutdown behavior are documented
+  in the validation report.
+- No independent audit, physical-passkey/mobile membership validation, production Aadhaar/email
+  adapter, unique-person guarantee or complete network anonymity is claimed.
+
+## Documentation and repository
+
+| Path | Contents |
+| --- | --- |
+| `packages/sdk` | npm package, vaults, envelopes, client and optional Semaphore module |
+| `packages/relayer` | Relayer, issuer, OHTTP relay and admission coordinator |
+| `apps/demo` | Public/private Sketch App and observer view |
+| `spec/SPEC.md` | Protocol and wire format for independent implementations |
+| `arkiv/schema.md` | Entities, typed attributes, lifetimes and queries |
+| `arkiv/friction.md` | Reproducible Arkiv integration feedback |
+| `docs/semaphore.md` | Group authorization and independent reader guide |
+| `docs/semaphore-validation.md` | Recorded tests, measurements and remaining limits |
+| `spikes`, `tests` | Isolated feasibility experiments and test suites |
+
+The [documentation site source](https://github.com/soumyacodes007/docs) includes SDK/API references,
+operations and an Anon Aadhaar guide. The latter describes the admission boundary; it does not
+provide a completed credential adapter.
+
+MIT licensed. Other teams can run the services and build compatible clients from the documented
+protocol. Keep real personal data, credential-derived hashes/nullifiers, secrets and private
+admission mappings off Arkiv. Demonstrations use synthetic data only.
