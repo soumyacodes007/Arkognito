@@ -1,4 +1,4 @@
-# arkognito — Veil privacy SDK for Arkiv
+# Arkognito — privacy SDK for Arkiv
 
 Use fresh record owners, encrypted payloads and shared relayers while retaining discovery,
 recovery and ownership challenges. Optional **`arkognito/semaphore`** adds anonymous group permissions.
@@ -31,21 +31,21 @@ running, funded local relayer; the user's record keys need no gas.
 import { KeyVault, createPrivateClient } from "arkognito"
 
 const { vault, recoveryCode } = KeyVault.random("example-feedback")
-const veil = await createPrivateClient({
+const arkognito = await createPrivateClient({
   app: "example-feedback",
   vault,
   relayers: ["http://localhost:8787"],
 })
 
-const record = await veil.createEntity({
+const record = await arkognito.createEntity({
   payload: new TextEncoder().encode("Synthetic feedback"),
   contentType: "text/plain",
   attributes: { type: "feedback" },
   expires: 3600,
   encrypt: true,
 })
-const mine = await veil.myEntities()
-const ownership = await veil.proveOwnership(record.entityKey, {
+const mine = await arkognito.myEntities()
+const ownership = await arkognito.proveOwnership(record.entityKey, {
   challenge: "verifier-issued-single-use-challenge",
   verifier: "reviewer-1",
 })
@@ -60,7 +60,7 @@ lost vault. Worker isolation limits secret exposure but cannot make a hostile fr
 ```ts
 import { createSemaphoreReader } from "arkognito/semaphore"
 
-const veil = await createPrivateClient({
+const arkognito = await createPrivateClient({
   app: group.project,
   vault,
   publicClient: reader,

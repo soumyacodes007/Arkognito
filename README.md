@@ -1,4 +1,4 @@
-# Veil / Arkognito
+# Arkognito
 
 Privacy infrastructure for user-owned records on [Arkiv](https://arkiv.network).
 The published TypeScript package is [**`arkognito@0.1.0`**](https://www.npmjs.com/package/arkognito/v/0.1.0);
@@ -8,11 +8,11 @@ anonymous group permissions use **`arkognito/semaphore`**.
 [Semaphore](#anonymous-group-permissions-with-semaphore) · [Run locally](#run-the-services-and-demo) ·
 [Test evidence](#tests-and-measured-evidence) · [Protocol](spec/SPEC.md)
 
-Veil writes through shared relayers and gives each record a fresh owner address. Users can recover
+Arkognito writes through shared relayers and gives each record a fresh owner address. Users can recover
 records and prove ownership without publishing their main-wallet-to-record mapping. Optional
 Semaphore proofs let approved group members submit without identifying which member submitted.
 
-> Experimental, Tiramisu testnet only. Veil reduces wallet linkage; it does not provide complete
+> Experimental, Tiramisu testnet only. Arkognito reduces wallet linkage; it does not provide complete
 > anonymity. Public metadata, content, timing, small groups and network observations can identify
 > users. No independent security audit has been performed. Use synthetic demo data only.
 
@@ -28,7 +28,7 @@ synthetic test proof was exercised. A combined credential adapter is not include
 
 ## Architecture
 
-Veil separates the user's private vault, shared transaction sender and public record owner. Arkiv
+Arkognito separates the user's private vault, shared transaction sender and public record owner. Arkiv
 stores the records; it does not execute the Semaphore verifier.
 
 ```mermaid
@@ -81,21 +81,21 @@ recovery code privately if you want to recover after restarting; never publish o
 import { KeyVault, createPrivateClient } from "arkognito"
 
 const { vault, recoveryCode } = KeyVault.random("example-feedback")
-const veil = await createPrivateClient({
+const arkognito = await createPrivateClient({
   app: "example-feedback",
   vault,
   relayers: ["http://localhost:8787"],
 })
 
-const record = await veil.createEntity({
+const record = await arkognito.createEntity({
   payload: new TextEncoder().encode("Synthetic feedback"),
   contentType: "text/plain",
   attributes: { type: "feedback" },
   expires: 3600,
   encrypt: true,
 })
-const mine = await veil.myEntities()
-const ownership = await veil.proveOwnership(record.entityKey, {
+const mine = await arkognito.myEntities()
+const ownership = await arkognito.proveOwnership(record.entityKey, {
   challenge: "verifier-issued-single-use-challenge",
   verifier: "reviewer-1",
 })
@@ -118,7 +118,7 @@ import { createPrivateClient } from "arkognito"
 const commitment = await vault.membershipCommitment(group)
 // Send commitment through your app's admission process; it does not enroll itself.
 
-const veil = await createPrivateClient({
+const arkognito = await createPrivateClient({
   app: group.project,
   vault,
   publicClient: reader,
@@ -127,7 +127,7 @@ const veil = await createPrivateClient({
 })
 ```
 
-Use normal `veil.createEntity(...)` after enrollment. The relayer checks the proof, historical root,
+Use normal `arkognito.createEntity(...)` after enrollment. The relayer checks the proof, historical root,
 intended owner, scope and signed record binding, then creates a readonly record and transfers
 ownership atomically. Configured projects require membership even when blind tokens are disabled;
 valid membership replaces token redemption for those projects.
@@ -178,7 +178,7 @@ an ordinary owner challenge proof, separate from a Semaphore membership proof.
 Synthetic cover is available for eligible ordinary encrypted records. Membership records cannot
 receive forged proof-bearing cover; minimum batch sizes need real valid submissions.
 
-Native Arkiv already supports creation and ownership transfer. Veil packages derivation, recovery,
+Native Arkiv already supports creation and ownership transfer. Arkognito packages derivation, recovery,
 private discovery, relaying, verification and optional group authorization around those primitives.
 
 ## Run the services and demo

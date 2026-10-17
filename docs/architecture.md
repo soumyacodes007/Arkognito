@@ -1,6 +1,6 @@
-# Veil architecture and trust boundaries
+# Arkognito architecture and trust boundaries
 
-Veil is the project name; `arkognito` is the published TypeScript package. It wraps Arkiv's native
+Arkognito is the project and published TypeScript package (`arkognito`). It wraps Arkiv's native
 entity operations with local key management, separate record owners, shared relaying, encrypted
 discovery and optional anonymous group authorization. This describes the current implementation,
 not a production anonymity guarantee. Use synthetic data only under this project's rules.
@@ -162,7 +162,7 @@ flowchart LR
     Vault["Local vault<br/>Random-secret-derived commitment"] --> Policy
     Policy -->|"Approve commitment only"| Admin["Configured group admin"]
     Admin -->|"Publish indexed member entity"| Group["Arkiv membership group"]
-    Group --> Proof["Current Veil and Semaphore flow<br/>Prove membership when submitting"]
+    Group --> Proof["Current Arkognito and Semaphore flow<br/>Prove membership when submitting"]
 ```
 
 Real credential material, credential proofs, credential-derived hashes/nullifiers and private

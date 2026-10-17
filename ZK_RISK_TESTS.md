@@ -1,15 +1,15 @@
-# Veil: follow-up tests of the risky assumptions
+# Arkognito: follow-up tests of the risky assumptions
 
 **Subsequent integration:** user-authorized implementation now adds these controls to the actual
-Veil SDK and relayer. See [integration validation](docs/semaphore-validation.md). Earlier isolated
+Arkognito SDK and relayer. See [integration validation](docs/semaphore-validation.md). Earlier isolated
 prototype failures below remain unchanged evidence; the integration is an experimental MVP,
 not a production security certification.
 
 17 October 2026. These are separate experiments on branch `zk-feasibility`; existing application code was neither executed nor modified. This report supplements `ZK_FEASIBILITY.md`. All chain writes used fresh throwaway signing keys, synthetic data, Tiramisu chain **7738577**, and `https://rpc.tiramisu.db-chain.testnet.arkiv.network`. Node **22.23.3** was used throughout these follow-ups.
 
-**Conclusion: Semaphore on Arkiv works, but the research relayer and current-state replay policy have demonstrated correctness defects. Keep the MVP to one relayer, add durable admission/reconciliation and retained valid-nullifier history, and defer credential-based joining.** The tests below establish specific outcomes, not production readiness or existing Veil integration.
+**Conclusion: Semaphore on Arkiv works, but the research relayer and current-state replay policy have demonstrated correctness defects. Keep the MVP to one relayer, add durable admission/reconciliation and retained valid-nullifier history, and defer credential-based joining.** The tests below establish specific outcomes, not production readiness or existing Arkognito integration.
 
-**Latest follow-up, after the user excluded ZK Email:** corrected isolated controls now pass **24 local + 11 live + 5 independent audit + 5 expiry checks**. See [the mitigation results below](#tested-mitigations-after-excluding-zk-email). The earlier failure rows remain evidence for the original S4/S5 prototypes; those files and the production Veil implementation were not silently replaced.
+**Latest follow-up, after the user excluded ZK Email:** corrected isolated controls now pass **24 local + 11 live + 5 independent audit + 5 expiry checks**. See [the mitigation results below](#tested-mitigations-after-excluding-zk-email). The earlier failure rows remain evidence for the original S4/S5 prototypes; those files and the production Arkognito implementation were not silently replaced.
 
 ## Results
 
@@ -87,4 +87,4 @@ The independent read-only audit verified **six readonly post publications**, two
 
 The primary live fixture made **7** transactions, costing **0.001217246002434492 GLM**. The separate expiry fixture made **2**, costing **0.000655984001311968 GLM**. Additional fees total **0.001873230003746460 GLM**; including all earlier spikes, **29 recorded transactions** cost **0.025600036051200072 GLM**. The two fresh wallets' combined ending balance was **9.974399963948799928 GLM**, reconciling to the original 10 GLM funding. No new funding was needed.
 
-**Verdict: GO for these isolated mitigations, with integration still required.** A shared file journal is one trusted coordinator on one host, not decentralized consensus. Complete native event history, archive availability, crash recovery/reconciliation and an appropriate finality policy remain operational requirements. Power-loss durability and cross-host atomic admission were not established. The production Veil SDK/relayer/demo remain unchanged and were not run. Use `spikes/risk-hardening/README.md` for reproduction and limits.
+**Verdict: GO for these isolated mitigations, with integration still required.** A shared file journal is one trusted coordinator on one host, not decentralized consensus. Complete native event history, archive availability, crash recovery/reconciliation and an appropriate finality policy remain operational requirements. Power-loss durability and cross-host atomic admission were not established. The production Arkognito SDK/relayer/demo remain unchanged and were not run. Use `spikes/risk-hardening/README.md` for reproduction and limits.

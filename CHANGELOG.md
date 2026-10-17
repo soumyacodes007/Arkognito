@@ -2,7 +2,7 @@
 
 ## 0.1.0 — 17 October 2026
 
-Initial experimental Tiramisu release of Veil under the npm package name `arkognito`.
+Initial experimental Tiramisu release of Arkognito under the npm package name `arkognito`.
 
 - Recoverable one-time record owners, encrypted payloads, recipient inboxes and ownership challenges.
 - Shared relayers, atomic create/ownership transfer, batch privacy controls and optional OHTTP.

@@ -1,4 +1,4 @@
-# Veil / Arkognito static audit
+# Arkognito static audit
 
 **Historical audit baseline.** Subsequent user-authorized implementation adds the optional Semaphore
 module to the SDK/relayer. See [integration guide](docs/semaphore.md) and
@@ -89,6 +89,6 @@ This is a bounded source audit, not a cryptographic audit or a claim that the ex
 
 Funded Phase 2 follow-up: separate Semaphore + Arkiv experiments now pass end to end on Tiramisu, including readonly groups/members, historical roots, ownership transfer, malicious-post rejection and proof-gated HTTP writes. See `ZK_FEASIBILITY.md` and `spikes/s3-arkiv/funded-summary.json`. This does not change the Phase 1 feature table: Semaphore is still missing from the existing `packages/sdk` / `packages/relayer` implementation, and existing application tests were not executed.
 
-The subsequent risk follow-up found additional defects in the **new research prototypes**, detailed in `ZK_RISK_TESTS.md`: malformed JSON crashes the S5 process, invalid existing proofs preempt valid admission, volatile uncertain reservations disappear across restart, owner deletion changes current-state canonical dedupe, and two independent relayers both write a nullifier. These are observed spike findings; they are not presented as new runtime test results for the existing Veil implementation. The original source audit and preserved user edits remain unchanged.
+The subsequent risk follow-up found additional defects in the **new research prototypes**, detailed in `ZK_RISK_TESTS.md`: malformed JSON crashes the S5 process, invalid existing proofs preempt valid admission, volatile uncertain reservations disappear across restart, owner deletion changes current-state canonical dedupe, and two independent relayers both write a nullifier. These are observed spike findings; they are not presented as new runtime test results for the existing Arkognito implementation. The original source audit and preserved user edits remain unchanged.
 
-After the user excluded ZK Email, new isolated mitigation code in `spikes/risk-hardening` passed 45 local/live/audit/expiry assertions addressing those prototype defects. See the latest section of `ZK_RISK_TESTS.md`. This does not change the Phase 1 feature classification or establish a passing production test suite: existing Veil source was neither modified nor executed.
+After the user excluded ZK Email, new isolated mitigation code in `spikes/risk-hardening` passed 45 local/live/audit/expiry assertions addressing those prototype defects. See the latest section of `ZK_RISK_TESTS.md`. This does not change the Phase 1 feature classification or establish a passing production test suite: existing Arkognito source was neither modified nor executed.

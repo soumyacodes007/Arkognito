@@ -2,7 +2,7 @@
 
 17 October 2026. Branch `zk-feasibility`. Existing work was first checkpointed as `2c53487` at the
 user's request. Unlike the earlier isolated spikes, these tests import and execute the actual
-Veil SDK and relayer. Nothing was pushed, published or deployed. Only a throwaway spike wallet
+Arkognito SDK and relayer. Nothing was pushed, published or deployed. Only a throwaway spike wallet
 signed; all records are synthetic and all transactions used Tiramisu chain 7738577.
 
 Machine-readable public evidence: [`semaphore-validation.json`](semaphore-validation.json).
@@ -50,7 +50,7 @@ the integration and final 46-test suite ran on isolated Node 22.23.3.
 * Appended a fourth member and confirmed the original historical membership snapshot stayed at three.
 * Used direct native SDK fixtures with six-second/one-hour signed lifetimes to exercise actual
   expiration without waiting an hour; expiration retained spent state and rejected the duplicate.
-  Normal Veil HTTP submissions still use the existing minimum one-hour expiry bucket.
+  Normal Arkognito HTTP submissions still use the existing minimum one-hour expiry bucket.
 * Exercised real-proof content/attribute/owner/expiry/group/scope negatives, a nonmember prover,
   malformed metadata, typed provider unavailability, and fixed/window scope separation offline.
 * Exercised an actual child-process exit (code 77) after durable reservation, a new journal instance,

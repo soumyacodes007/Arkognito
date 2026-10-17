@@ -1,6 +1,6 @@
-# Anonymous membership with Veil
+# Anonymous membership with Arkognito
 
-Veil's optional Semaphore v4 module authorizes records without publishing which approved member
+Arkognito's optional Semaphore v4 module authorizes records without publishing which approved member
 submitted them. It preserves the normal SDK's encrypted payloads, fresh owner addresses,
 recovery, ownership challenges and shared relayer batches. It does not provide complete anonymity,
 unique-human enrollment, private network traffic, or application smart contracts on Arkiv.
@@ -96,7 +96,7 @@ history, pending nonces and receipts before any manual repair; an empty current 
 that no write happened. Restore the journal from a trusted backup, never delete it to clear errors.
 Automatic operator reconciliation and cross-host coordination are not implemented.
 
-Membership batches require real valid member submissions for their requested size. Veil cannot
+Membership batches require real valid member submissions for their requested size. Arkognito cannot
 forge Semaphore proofs for cover records, so synthetic cover padding is disabled for these records.
 Proofs, group, scope and nullifier are public; repeated attempts in the same scope are intentionally
 linkable. Network timing, public app metadata, traffic and small groups can still identify people.
@@ -107,17 +107,17 @@ linkable. Network timing, public app metadata, traffic and small groups can stil
 import { createPrivateClient, WorkerVault } from "arkognito"
 
 const vault = await WorkerVault.fromRecoveryCode(savedRecoveryCode, "example-feedback")
-const veil = await createPrivateClient({
+const arkognito = await createPrivateClient({
   app: "example-feedback", vault, relayers: [relayerUrl], publicClient: reader,
   semaphore: { group },
 })
-const result = await veil.createEntity({
+const result = await arkognito.createEntity({
   payload: new TextEncoder().encode("Synthetic feedback"),
   contentType: "text/plain", attributes: { type: "feedback" },
   expires: 3600, encrypt: true,
 })
-const mine = await veil.myEntities() // Local tag discovery and decryption still work.
-const ownership = await veil.proveOwnership(result.entityKey, {
+const mine = await arkognito.myEntities() // Local tag discovery and decryption still work.
+const ownership = await arkognito.proveOwnership(result.entityKey, {
   challenge: "application-issued-random-challenge", verifier: "reviewer-1",
 })
 vault.terminate() // When the app closes this session.
@@ -147,7 +147,7 @@ const feed = createSemaphoreReader(reader, group, {
   maxPages: 100,
 })
 const { accepted, rejected, spent, snapshot } = await feed.readPosts()
-// Or: veil.readPosts() uses the configured relayer addresses.
+// Or: arkognito.readPosts() uses the configured relayer addresses.
 ```
 
 The reader fetches native creation logs from group creation through a pinned head, authenticates
