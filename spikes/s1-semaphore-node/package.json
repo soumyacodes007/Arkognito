@@ -1,0 +1,16 @@
+{
+  "name": "s1-semaphore-node",
+  "scripts": {
+    "start": "node run.mjs"
+  },
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@semaphore-protocol/group": "4.14.4",
+    "@semaphore-protocol/identity": "4.14.4",
+    "@semaphore-protocol/proof": "4.14.4"
+  },
+  "devDependencies": {
+    "node": "22.23.3"
+  }
+}

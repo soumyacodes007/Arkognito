@@ -1,0 +1,21 @@
+{
+  "started": "2026-10-17T06:30:24.424Z",
+  "admin": "0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD",
+  "project": "veil-zk-spike-1792218624424",
+  "checks": {
+    "sizesFit": true
+  },
+  "errors": [],
+  "chainId": 7738577,
+  "balanceWei": "0",
+  "memberCount": 5,
+  "groupPayloadBytes": 139,
+  "postPayloadBytes": 1096,
+  "proofJsonBytes": 962,
+  "postAttributeCount": 6,
+  "maxAttributeNameBytes": 9,
+  "maxStringAttributeBytes": 77,
+  "verdict": "RISKY",
+  "error": "EntityMutationError: Transaction failed: Execution error without revert data\n    at sendArkivTransaction (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s3-arkiv/node_modules/@arkiv-network/sdk/dist/index.js:656:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async executeBatch (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s3-arkiv/node_modules/@arkiv-network/sdk/dist/index.js:750:41)\n    at async file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s3-arkiv/run.mjs:34:40",
+  "blocker": "Fresh throwaway wallet unfunded; live write/read/mutation/transfer checks not established"
+}

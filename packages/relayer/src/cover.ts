@@ -7,7 +7,7 @@
 // copied: random bytes cannot pass for someone's plaintext, so a batch of plaintext records gets no
 // cover. An inbox record's cover is signed by a key other than its owner, like the real one.
 import { bytes32, str } from "@arkiv-network/sdk/attr"
-import { type ArkognitoSigner, envelopeDigest, fromBase64, parseEnvelope, sealEnvelope } from "arkognito"
+import { type ArkognitoSigner, envelopeDigest, fromBase64, parseEnvelope, readSealHeader, sealEnvelope } from "arkognito"
 import { bytesToHex } from "viem"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import type { BatchItem } from "./batcher"
@@ -37,18 +37,33 @@ export async function coverLike(template: BatchItem): Promise<BatchItem | undefi
   } catch {
     return undefined
   }
-  if (env.enc !== 1) return undefined
+  if (env.enc !== 1 && env.enc !== 2) return undefined
   const owner = privateKeyToAccount(generatePrivateKey())
   const signer = template.inbox ? signerFor(owner, privateKeyToAccount(generatePrivateKey())) : signerFor(owner)
   const attributes = { ...template.attributes, vtag: str(randomTag()) }
+  const real = fromBase64(env.data)
+  const payload = crypto.getRandomValues(new Uint8Array(real.length))
+  if (env.enc === 2) {
+    // A sealed record's header is readable: copy it (same keepers and threshold) with a fresh
+    // sealId, so the cover parses like a real sealed record. No keeper holds a share for it.
+    let headerLength: number
+    try {
+      headerLength = readSealHeader(real).headerLength
+    } catch {
+      return undefined
+    }
+    payload.set(real.subarray(0, headerLength))
+    payload.set(crypto.getRandomValues(new Uint8Array(32)), 3)
+  }
   const sealed = await sealEnvelope({
     signer,
     app: env.app,
-    payload: crypto.getRandomValues(new Uint8Array(fromBase64(env.data).length)),
+    payload,
     contentType: env.ct,
     attributes,
     expSeconds: template.expSeconds,
-    encrypted: true,
+    encrypted: env.enc === 1,
+    sealed: env.enc === 2,
   })
   // Same bucket or nothing: a cover record of a different size would stand out.
   if (enc.encode(sealed.text).length !== enc.encode(template.envelope).length) return undefined
@@ -61,6 +76,7 @@ export async function coverLike(template: BatchItem): Promise<BatchItem | undefi
     receivedAt: Date.now(),
     inbox: template.inbox,
     cover: true,
+    flags: template.flags,
     sideCreates: template.sideCreates?.map((c) => ({
       ...c,
       attributes: { ...c.attributes, ...("tokenid" in (c.attributes ?? {}) ? { tokenid: bytes32(bytesToHex(crypto.getRandomValues(new Uint8Array(32)))) } : {}) },
@@ -74,7 +90,7 @@ export async function coverFor(batch: BatchItem[], min: number): Promise<BatchIt
   if (need <= 0) return []
   const templates = batch.filter((it) => {
     try {
-      return parseEnvelope(it.envelope).enc === 1
+      return parseEnvelope(it.envelope).enc !== 0
     } catch {
       return false
     }

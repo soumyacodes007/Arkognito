@@ -1,0 +1,41 @@
+{
+  "started": "2026-10-17T06:59:53.927Z",
+  "runtime": "v22.23.3",
+  "stages": [
+    {
+      "name": "verify-public-DKIM",
+      "at": "2026-10-17T06:59:53.933Z"
+    },
+    {
+      "name": "compile",
+      "at": "2026-10-17T06:59:55.180Z"
+    },
+    {
+      "name": "inspect-and-witness",
+      "at": "2026-10-17T07:03:24.720Z"
+    }
+  ],
+  "note": "Standalone library circuit, not Registry blueprint. Public upstream sample, local proving only; no email data/proof/public signals sent to Arkiv. Local experimental setup is not a production trusted setup.",
+  "dkimVerified": true,
+  "domain": "icloud.com",
+  "maxHeaderBytes": 512,
+  "maxBodyBytes": 128,
+  "compileMs": 209502.3745,
+  "compileSummary": [
+    "non-linear constraints: 803707",
+    "linear constraints: 229189",
+    "public inputs: 0",
+    "private inputs: 709",
+    "public outputs: 3",
+    "wires: 1011299",
+    "labels: 3245290",
+    "\u001b[32mWritten successfully:\u001b[0m state/main.r1cs",
+    "\u001b[32mWritten successfully:\u001b[0m state/main_js/main.wasm"
+  ],
+  "constraints": 1032896,
+  "wires": 1011299,
+  "publicInputs": 0,
+  "outputs": 3,
+  "error": "Error: Error: Assert Failed. Error in template Num2Bits_0 line: 38\nError in template EmailVerifier_239 line: 59\n\n    at file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-email-local/node_modules/circom_runtime/js/witness_calculator.js:469:27\n    at Array.forEach (<anonymous>)\n    at WitnessCalculatorCircom2._doCalculateWitness (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-email-local/node_modules/circom_runtime/js/witness_calculator.js:440:14)\n    at WitnessCalculatorCircom2.calculateWTNSBin (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-email-local/node_modules/circom_runtime/js/witness_calculator.js:499:20)\n    at Module.wtnsCalculate (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-email-local/node_modules/snarkjs/src/wtns_calculate.js:45:28)\n    at async file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-email-local/run.mjs:17:59",
+  "verdict": "RISKY"
+}

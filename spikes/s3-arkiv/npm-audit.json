@@ -1,0 +1,154 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@semaphore-protocol/group": {
+      "name": "@semaphore-protocol/group",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@zk-kit/lean-imt"
+      ],
+      "effects": [],
+      "range": ">=4.12.1",
+      "nodes": [
+        "node_modules/@semaphore-protocol/group"
+      ],
+      "fixAvailable": {
+        "name": "@semaphore-protocol/group",
+        "version": "4.12.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@zk-kit/lean-imt": {
+      "name": "@zk-kit/lean-imt",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@zk-kit/utils"
+      ],
+      "effects": [
+        "@semaphore-protocol/group"
+      ],
+      "range": ">=2.2.4",
+      "nodes": [
+        "node_modules/@zk-kit/lean-imt"
+      ],
+      "fixAvailable": {
+        "name": "@semaphore-protocol/group",
+        "version": "4.12.0",
+        "isSemVerMajor": true
+      }
+    },
+    "@zk-kit/utils": {
+      "name": "@zk-kit/utils",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "ethers"
+      ],
+      "effects": [
+        "@zk-kit/lean-imt"
+      ],
+      "range": ">=1.4.0",
+      "nodes": [
+        "node_modules/@zk-kit/lean-imt/node_modules/@zk-kit/utils"
+      ],
+      "fixAvailable": {
+        "name": "@semaphore-protocol/group",
+        "version": "4.12.0",
+        "isSemVerMajor": true
+      }
+    },
+    "ethers": {
+      "name": "ethers",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "ws"
+      ],
+      "effects": [
+        "@zk-kit/utils"
+      ],
+      "range": "6.0.0-beta.1 - 6.16.0",
+      "nodes": [
+        "node_modules/ethers"
+      ],
+      "fixAvailable": {
+        "name": "@semaphore-protocol/group",
+        "version": "4.12.0",
+        "isSemVerMajor": true
+      }
+    },
+    "ws": {
+      "name": "ws",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1119108,
+          "name": "ws",
+          "dependency": "ws",
+          "title": "ws: Uninitialized memory disclosure",
+          "url": "https://github.com/advisories/GHSA-58qx-3vcg-4xpx",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-908"
+          ],
+          "cvss": {
+            "score": 4.4,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:N/A:N"
+          },
+          "range": ">=8.0.0 <8.20.1"
+        },
+        {
+          "source": 1123259,
+          "name": "ws",
+          "dependency": "ws",
+          "title": "ws: Memory exhaustion DoS from tiny fragments and data chunks",
+          "url": "https://github.com/advisories/GHSA-96hv-2xvq-fx4p",
+          "severity": "high",
+          "cwe": [
+            "CWE-400",
+            "CWE-770",
+            "CWE-1050"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=8.0.0 <8.21.0"
+        }
+      ],
+      "effects": [
+        "ethers"
+      ],
+      "range": "8.0.0 - 8.20.1",
+      "nodes": [
+        "node_modules/ethers/node_modules/ws"
+      ],
+      "fixAvailable": {
+        "name": "@semaphore-protocol/group",
+        "version": "4.12.0",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 4,
+      "high": 1,
+      "critical": 0,
+      "total": 5
+    },
+    "dependencies": {
+      "prod": 33,
+      "dev": 0,
+      "optional": 0,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 32
+    }
+  }
+}

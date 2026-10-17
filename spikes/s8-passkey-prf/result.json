@@ -1,0 +1,15 @@
+{
+  "started": "2026-10-17T06:27:24.556Z",
+  "bundledError": "browserType.launch: Executable doesn't exist at C:\\Users\\soumy\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+  "browserVersion": "154.0.8037.100",
+  "prf": {
+    "createMs": 5.200000047683716,
+    "getMs": 4.1000001430511475,
+    "enabled": true,
+    "createHasResult": true,
+    "resultBytes": 32,
+    "stable": true,
+    "differentSaltDifferent": true
+  },
+  "verdict": "GO"
+}

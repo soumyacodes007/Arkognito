@@ -1,0 +1,59 @@
+{
+  "started": "2026-10-17T06:36:33.943Z",
+  "methods": [
+    "eth_blockNumber",
+    "eth_fillTransaction",
+    "eth_getTransactionCount",
+    "eth_getBlockByNumber",
+    "eth_maxPriorityFeePerGas",
+    "eth_estimateGas"
+  ],
+  "rpcErrors": [
+    {
+      "method": "eth_fillTransaction",
+      "name": "MethodNotFoundRpcError",
+      "shortMessage": "The method \"eth_fillTransaction\" does not exist / is not available.",
+      "details": "the method eth_fillTransaction does not exist/is not available",
+      "code": -32601
+    },
+    {
+      "method": "eth_estimateGas",
+      "name": "TransactionRejectedRpcError",
+      "shortMessage": "Transaction creation failed.",
+      "details": "out of gas: gas required exceeds: 0",
+      "code": -32003
+    }
+  ],
+  "causes": [
+    {
+      "name": "EntityMutationError",
+      "message": "Transaction failed: Execution error without revert data"
+    },
+    {
+      "name": "ContractFunctionExecutionError",
+      "shortMessage": "Transaction creation failed.",
+      "details": "out of gas: gas required exceeds: 0"
+    },
+    {
+      "name": "TransactionExecutionError",
+      "shortMessage": "Transaction creation failed.",
+      "details": "out of gas: gas required exceeds: 0"
+    },
+    {
+      "name": "EstimateGasExecutionError",
+      "shortMessage": "Transaction creation failed.",
+      "details": "out of gas: gas required exceeds: 0"
+    },
+    {
+      "name": "TransactionRejectedRpcError",
+      "shortMessage": "Transaction creation failed.",
+      "details": "out of gas: gas required exceeds: 0"
+    },
+    {
+      "name": "RpcRequestError",
+      "shortMessage": "RPC Request failed.",
+      "details": "out of gas: gas required exceeds: 0"
+    },
+    {}
+  ]
+}

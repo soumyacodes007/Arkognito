@@ -1,0 +1,51 @@
+{
+  "started": "2026-10-17T06:25:56.775Z",
+  "runs": [
+    {
+      "hosted": false,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "crossOriginIsolated": false,
+      "deterministic": true,
+      "proofMs": 5364.299999952316,
+      "verified": true,
+      "verifyMs": 27.09999990463257,
+      "proofJsonBytes": 897,
+      "verdict": "GO"
+    },
+    {
+      "hosted": true,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+      "crossOriginIsolated": false,
+      "deterministic": true,
+      "proofMs": 350.5,
+      "verified": true,
+      "verifyMs": 20.399999856948853,
+      "proofJsonBytes": 896,
+      "verdict": "GO"
+    }
+  ],
+  "requests": [
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.wasm",
+      "status": 200
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.zkey",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:60898/artifacts/semaphore-3.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:60898/artifacts/semaphore-3.zkey",
+      "status": 200
+    }
+  ],
+  "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "bundledChromiumError": "browserType.launch: Executable doesn't exist at C:\\Users\\soumy\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+  "browserVersion": "154.0.8037.100",
+  "verdict": "GO"
+}

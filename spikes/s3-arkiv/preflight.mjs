@@ -1,0 +1,12 @@
+import {generatePrivateKey,privateKeyToAccount} from 'viem/accounts';
+import {createPublicClient} from '@arkiv-network/sdk';
+import {tiramisu} from '@arkiv-network/sdk/chains';
+import {http} from 'viem';
+import {existsSync,writeFileSync,readFileSync} from 'node:fs';
+const env=new URL('../.env',import.meta.url);
+if(!existsSync(env))writeFileSync(env,`SPIKE_PRIVATE_KEY=${generatePrivateKey()}\n`);
+const key=readFileSync(env,'utf8').match(/^SPIKE_PRIVATE_KEY=(0x[0-9a-f]{64})$/m)?.[1];
+const account=privateKeyToAccount(key);
+const reader=createPublicClient({chain:tiramisu,cacheTime:0,transport:http(tiramisu.rpcUrls.default.http[0],{timeout:15000,retryCount:0})});
+const result={started:new Date().toISOString(),address:account.address,chainId:await reader.getChainId(),block:(await reader.getBlockNumber()).toString(),balanceWei:(await reader.getBalance({address:account.address})).toString()};
+writeFileSync(new URL('preflight.json',import.meta.url),JSON.stringify(result,null,2));console.log(result);

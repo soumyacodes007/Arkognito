@@ -2,6 +2,16 @@
 
 Specific, reproducible feedback on Arkiv rough edges, logged the same day we hit them.
 
+## Top-level mutation error obscures the zero-balance gas-estimation failure — 17 Oct 2026
+
+- **SDK / network:** `@arkiv-network/sdk` 0.8.1, `viem` 2.57.4, Node 24.13.1 · Tiramisu (7738577).
+- **What we expected:** a create/batch attempt from a fresh unfunded test wallet should explain the funding/gas-estimation rejection in its top-level error, and distinguish a pre-send estimate failure from an uncertain broadcast outcome.
+- **What happened:** S3 `executeBatch` and S5's HTTP write returned `EntityMutationError: Transaction failed: Execution error without revert data`. A separate guarded diagnostic (signing and sending both blocked) observed `eth_estimateGas` failing with code `-32003`, name `TransactionRejectedRpcError`, details `out of gas: gas required exceeds: 0`. Those details are retained down the cause chain but absent from the top-level message. The diagnostic did not reach signing or a send method. The earlier uninstrumented failures are not mined-revert evidence.
+- **Steps:** create a fresh key only in gitignored `spikes/.env`; confirm chain 7738577 and zero balance; install S3's pinned dependencies; run `node spikes/s3-arkiv/diagnose-write.mjs`. It intercepts the RPC methods and blocks all signing/broadcasting, attempts a tiny synthetic create, and records the cause chain in `spikes/s3-arkiv/write-diagnostic.json`. The original batch attempt is `node spikes/s3-arkiv/run.mjs`; do not retry an uncertain funded write automatically.
+- **What would fix it:** include nested `details` / `shortMessage` when a `ContractFunctionExecutionError` has no decoded entity revert; expose the observed failure phase separately from the error text. Continue preserving `cause` and any known transaction hash.
+- **Workaround:** preflight balances and guarded estimates, inspect the complete cause chain, and reconcile any admitted send before retrying. Faucet GET also returned HTTP 401 `{"error":"Unauthorized"}`; Hub UI requires wallet sign-in and CAPTCHA, so the fresh-account live group/transfer tests could not be completed unattended. That access requirement is an onboarding blocker, not evidence of a chain mutation bug.
+- **Funded follow-up, same day:** after the user funded the fresh test account, S3–S5 passed: readonly updates were rejected, create/transfer and historical membership worked, and the independent reader rejected all four bad-post fixtures. Five successful receipts and exact fees are recorded in `spikes/s3-arkiv/funded-summary.json`. The original zero-balance error-message issue remains reproducible on an unfunded account; it was not a funded chain failure.
+
 Format for each entry:
 
 ```
@@ -71,3 +81,12 @@ SDK version · network · what we tried · what happened · what we expected · 
 
 - The best-practices skill says npm `latest` is 0.7.0 and to install `@dev`; `npm install @arkiv-network/sdk@0.8.1` works today.
 - Some of our earlier notes used `tiramisu.explorer.arkiv.network`; the explorer is `https://indexer.tiramisu.db-chain.testnet.arkiv.network`.
+
+## Anonymous historical-query budget exhausted during proof-on-read tests — 17 Oct 2026
+
+- **SDK / network:** `@arkiv-network/sdk` **0.8.1**, `viem` **2.57.4**, Node **22.23.3**; Tiramisu chain **7738577**, `https://rpc.tiramisu.db-chain.testnet.arkiv.network`.
+- **What we expected:** the bounded follow-up would complete repeated historical group/member reads for a small proof-gated endpoint, or surface an actionable provider-budget error. No exact anonymous quota was assumed.
+- **What happened:** after the 205-member pagination and repeated proof/read fixtures, `arkiv_query` for the three-member follow-up group returned **HTTP 429**, details **`"ANON_COST_LIMITED"`**. Error stem: `HTTP request failed. Status: 429 ... Details: "ANON_COST_LIMITED" Version: viem@2.57.4`. The first restart/race tests never reached their post writer callbacks. This was a provider budget response, not proof failure or an empty group. The experiment HTTP wrapper incorrectly returned 400 for the underlying read failure; that classification is an application defect.
+- **Reproduce:** on the anonymous endpoint, perform repeated `.select(...).where(project/type/trusted creator).atBlock(rootBlock).limit(200)` page walks while validating posts. `spikes/risk-state/race-rate-limited-attempt.json` retains the exact sanitized queries and response. Exhaustion depends on the provider's current quota/window; no deterministic threshold is established by this run. Do not deliberately flood the RPC to reproduce it.
+- **Workaround observed:** server-side `X-API-KEY` using the already configured access key allowed `spikes/risk-state/resume.mjs` to complete against the existing confirmed group. No key was put in a URL or browser and no confirmed create/funding was repeated. A verified immutable root cache, bounded work, backoff and returning 503 for unavailable dependencies would reduce query pressure.
+- **What would improve it:** document anonymous query-cost/window limits and recovery guidance for `ANON_COST_LIMITED`, and expose actionable retry/quota metadata where available. The SDK correctly preserved the HTTP status in this case; this is an operational integration rough edge, not evidence that historical reads are unsupported.

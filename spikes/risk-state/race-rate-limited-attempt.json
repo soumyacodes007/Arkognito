@@ -1,0 +1,100 @@
+{
+  "started": "2026-10-17T07:01:56.112Z",
+  "runtime": "v22.23.3",
+  "project": "veil-race-1792220516113",
+  "receipts": [
+    {
+      "hash": "0x067424b1badaf20cffffedd17c52e0cf739eb591f020af6a5640ba8cb6169992",
+      "label": "fund-fresh-relay2",
+      "block": "685378",
+      "gasCostWei": "21000000042000"
+    },
+    {
+      "hash": "0xe36c8cbc6a5d03cdd80556c8dee4b89bdb9a93cccd4fb86a89d2728be49f86ef",
+      "label": "group",
+      "block": "685382",
+      "gasCostWei": "392960000785920"
+    }
+  ],
+  "checks": [
+    {
+      "name": "real process restart loses volatile uncertain reservations",
+      "pass": false
+    },
+    {
+      "name": "fsynced pending guard prevents second writer after restart",
+      "pass": false
+    }
+  ],
+  "admin": "0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD",
+  "secondRelayer": "0x3fe24fB501DaBc90EBe6413110F936c646CEba5F",
+  "startBalances": [
+    "9976969873953939748",
+    "0"
+  ],
+  "restartTests": [
+    {
+      "mode": "volatile",
+      "observations": [
+        {
+          "pid": 108476,
+          "status": 400,
+          "body": {
+            "error": "HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('member') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7546\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4"
+          }
+        },
+        {
+          "pid": 91528,
+          "status": 400,
+          "body": {
+            "error": "HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('group') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7546\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4"
+          }
+        }
+      ],
+      "actualWriterCalls": 0,
+      "noBroadcast": true
+    },
+    {
+      "mode": "durable",
+      "observations": [
+        {
+          "pid": 102152,
+          "status": 400,
+          "body": {
+            "error": "HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('member') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7546\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4"
+          }
+        },
+        {
+          "pid": 77740,
+          "status": 400,
+          "body": {
+            "error": "HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('member') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7546\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4"
+          }
+        }
+      ],
+      "actualWriterCalls": 0,
+      "noBroadcast": true
+    }
+  ],
+  "malformed": {
+    "requestError": "fetch failed",
+    "exitCode": 1,
+    "stderr": "file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s5-relayer/server.mjs:12\r\n   const {entity,proof}=body;const scope=windowScope(group,now().toISOString().slice(0,13));\r\n          ^\r\n\r\nTypeError: Cannot destructure property 'entity' of 'body' as it is null.\r\n    at file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s5-relayer/server.mjs:12:11\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\r\n\r\nNode.js v22.23.3\r\n"
+  },
+  "raceResponses": [
+    {
+      "status": 400,
+      "body": {
+        "error": "HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('group') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7546\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4"
+      }
+    },
+    {
+      "status": 400,
+      "body": {
+        "error": "HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('group') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7546\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4"
+      }
+    }
+  ],
+  "verdict": "RISKY",
+  "error": "HttpRequestError: HTTP request failed.\n\nStatus: 429\nURL: https://rpc.tiramisu.db-chain.testnet.arkiv.network/\nRequest body: {\"method\":\"arkiv_query\",\"params\":[\"project = str('veil-race-1792220516113') AND type = str('post') AND scope = str('47762749565425106456152945149214154916643631520356803327625371239251943660122') AND $creator = addr(0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD)\",{\"select\":{\"key\":true,\"owner\":true,\"creator\":true,\"createdAt\":true,\"updatedAt\":false,\"expiresAt\":false,\"creationFlags\":true,\"contentType\":false,\"payload\":true,\"attributeSchema\":false,\"attributes\":true},\"atBlock\":\"0xa7557\",\"limit\":\"0xc8\"}]}\n\nDetails: \"ANON_COST_LIMITED\"\nVersion: viem@2.57.4\n    at Object.request (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-state/node_modules/viem/_esm/utils/rpc/http.js:75:27)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async fn (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-state/node_modules/viem/_esm/clients/transports/http.js:64:25)\n    at async request (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-state/node_modules/viem/_esm/clients/transports/http.js:69:45)\n    at async withRetry.delay.count.count (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-state/node_modules/viem/_esm/utils/buildRequest.js:30:24)\n    at async attemptRetry (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-state/node_modules/viem/_esm/utils/promise/withRetry.js:24:30)"
+}

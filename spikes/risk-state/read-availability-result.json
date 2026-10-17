@@ -1,0 +1,15 @@
+{
+  "started": "2026-10-17T07:12:08.133Z",
+  "runtime": "v22.23.3",
+  "mode": "Failure injection; no network or broadcast",
+  "verdict": "RISKY",
+  "threw": false,
+  "accepted": 0,
+  "rejected": [
+    {
+      "key": "synthetic-availability-control",
+      "reason": "Injected historical RPC unavailable"
+    }
+  ],
+  "finding": "Historical-provider failure is returned as a rejected post, so caller can mistake unavailable verification for an invalid proof/empty valid feed."
+}

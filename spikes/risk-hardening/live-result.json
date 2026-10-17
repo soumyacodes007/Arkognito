@@ -1,0 +1,255 @@
+{
+  "started": "2026-10-17T08:14:00.715Z",
+  "runtime": "v22.23.3",
+  "project": "veil-hardening-live-1792224840717",
+  "receipts": [
+    {
+      "hash": "0x04afd2d6c4e632f2a645097d79d4b0bfd9f8045a582910b7166ec5b7e8acea7c",
+      "label": "group",
+      "sender": "0x1a742fa770502259b954e9e3e5fd8ce6edd005dd",
+      "block": "687541",
+      "gasCostWei": "392624000785248"
+    },
+    {
+      "hash": "0xe8bb057308e9050d6d01fe5d2108b5a132a9b6dc582e31c3df811f5e02a60956",
+      "label": "invalid-preemption-fixture",
+      "sender": "0x1a742fa770502259b954e9e3e5fd8ce6edd005dd",
+      "block": "687545",
+      "gasCostWei": "122048000244096"
+    },
+    {
+      "hash": "0x34ca742338bd351c500cb969b8289405038904ad0756f4294e7e9f3f1dd1ba86",
+      "label": "endpoint-1",
+      "sender": "0x3fe24fb501dabc90ebe6413110f936c646ceba5f",
+      "block": "687552",
+      "gasCostWei": "151664000303328"
+    },
+    {
+      "hash": "0x9c02563f10c1d2f441d2a1fc14c2874dbceda51f7c84bcb4e1843d6b115cc18b",
+      "label": "deliberate-valid-duplicate",
+      "sender": "0x1a742fa770502259b954e9e3e5fd8ce6edd005dd",
+      "block": "687560",
+      "gasCostWei": "131664000263328"
+    },
+    {
+      "hash": "0x14697d03ec45e99ae7264d4e69e9d1cb5ffd6a5926f3406a6b354420a0d51da5",
+      "label": "delete-canonical",
+      "sender": "0x1a742fa770502259b954e9e3e5fd8ce6edd005dd",
+      "block": "687570",
+      "gasCostWei": "24510000049020"
+    },
+    {
+      "hash": "0xbce23b88bf4d8ce284744dd51821c379f5406fb6cd08171569ee4f09cc568492",
+      "label": "chronological-pair",
+      "sender": "0x1a742fa770502259b954e9e3e5fd8ce6edd005dd",
+      "block": "687582",
+      "gasCostWei": "263168000526336"
+    },
+    {
+      "hash": "0x12dbb49fddad6a5101294b590b834e26d13ac281dfebe5ea30922e0f33427851",
+      "label": "endpoint-0",
+      "sender": "0x1a742fa770502259b954e9e3e5fd8ce6edd005dd",
+      "block": "687598",
+      "gasCostWei": "131568000263136"
+    }
+  ],
+  "checks": [
+    {
+      "name": "live null request rejected without process crash",
+      "pass": true
+    },
+    {
+      "name": "live invalid earlier proof does not block valid post",
+      "pass": true,
+      "details": {
+        "status": 201,
+        "body": {
+          "txHash": "0x34ca742338bd351c500cb969b8289405038904ad0756f4294e7e9f3f1dd1ba86",
+          "entityKey": "0xd1a50aa2f40e1a4c60bc4374f62251e0e1b280e11b887faa31484eafdc0defa9"
+        },
+        "ms": 14796.510099999996
+      }
+    },
+    {
+      "name": "live confirmed replay rejected",
+      "pass": true
+    },
+    {
+      "name": "live receipt-derived history ignores invalid preemption and dedupes",
+      "pass": true,
+      "details": {
+        "history": 3,
+        "accepted": [
+          "0xd1a50aa2f40e1a4c60bc4374f62251e0e1b280e11b887faa31484eafdc0defa9"
+        ],
+        "rejected": [
+          {
+            "key": "0xd8bf38ae9ebeaa32e52a4f00130472c6d62067319ce2be242362eccc16f7f3fe",
+            "reason": "Invalid Semaphore proof"
+          },
+          {
+            "key": "0x9741d2822617c2f6cb952aaaf11c857f645105e29e5b256ac12fc4a1ada77262",
+            "reason": "Duplicate nullifier"
+          }
+        ]
+      }
+    },
+    {
+      "name": "live deletion retains spent nullifier without promoting duplicate",
+      "pass": true,
+      "details": {
+        "history": 3,
+        "spent": [
+          {
+            "key": "0xd1a50aa2f40e1a4c60bc4374f62251e0e1b280e11b887faa31484eafdc0defa9",
+            "nullifier": "455421598429296943868536617380770284176071124671972572749772108154928904693",
+            "live": false
+          }
+        ],
+        "rejected": [
+          {
+            "key": "0xd8bf38ae9ebeaa32e52a4f00130472c6d62067319ce2be242362eccc16f7f3fe",
+            "reason": "Invalid Semaphore proof"
+          },
+          {
+            "key": "0x9741d2822617c2f6cb952aaaf11c857f645105e29e5b256ac12fc4a1ada77262",
+            "reason": "Duplicate nullifier"
+          }
+        ]
+      }
+    },
+    {
+      "name": "live transaction/log positions select first create",
+      "pass": true,
+      "details": {
+        "createOrder": [
+          "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+          "0x5782622f658e5290b1ef1d87f2a4633a16812fb0ae2a67029cd0ff229fa556dd"
+        ],
+        "accepted": [
+          "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428"
+        ],
+        "positions": [
+          {
+            "key": "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+            "position": {
+              "block": "687582",
+              "transactionIndex": 0,
+              "logIndex": 0
+            }
+          },
+          {
+            "key": "0x5782622f658e5290b1ef1d87f2a4633a16812fb0ae2a67029cd0ff229fa556dd",
+            "position": {
+              "block": "687582",
+              "transactionIndex": 0,
+              "logIndex": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "live coordinated two-relayer race writes once",
+      "pass": true,
+      "details": {
+        "responses": [
+          {
+            "status": 201,
+            "body": {
+              "txHash": "0x12dbb49fddad6a5101294b590b834e26d13ac281dfebe5ea30922e0f33427851",
+              "entityKey": "0xedc2e5f7c10d87e279bb528f98b3586b23fa49f8055132fbb55eae0b0012bc8a"
+            },
+            "ms": 13208.898399999991
+          },
+          {
+            "status": 503,
+            "body": {
+              "error": "Pending admission requires reconciliation"
+            },
+            "ms": 3487.2102000000014
+          }
+        ],
+        "writerCalls": 1
+      }
+    },
+    {
+      "name": "final independent history verifies two live canonical posts",
+      "pass": true,
+      "details": {
+        "history": 6,
+        "accepted": [
+          "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+          "0xedc2e5f7c10d87e279bb528f98b3586b23fa49f8055132fbb55eae0b0012bc8a"
+        ],
+        "spent": [
+          {
+            "key": "0xd1a50aa2f40e1a4c60bc4374f62251e0e1b280e11b887faa31484eafdc0defa9",
+            "nullifier": "455421598429296943868536617380770284176071124671972572749772108154928904693",
+            "live": false
+          },
+          {
+            "key": "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+            "nullifier": "17984734695058146664562386436308194185265580089422899806347805108516961761462",
+            "live": true
+          },
+          {
+            "key": "0xedc2e5f7c10d87e279bb528f98b3586b23fa49f8055132fbb55eae0b0012bc8a",
+            "nullifier": "20198671585262198964738009686280392118619399317889029406778633011898965671291",
+            "live": true
+          }
+        ],
+        "rejected": [
+          {
+            "key": "0xd8bf38ae9ebeaa32e52a4f00130472c6d62067319ce2be242362eccc16f7f3fe",
+            "reason": "Invalid Semaphore proof"
+          },
+          {
+            "key": "0x9741d2822617c2f6cb952aaaf11c857f645105e29e5b256ac12fc4a1ada77262",
+            "reason": "Duplicate nullifier"
+          },
+          {
+            "key": "0x5782622f658e5290b1ef1d87f2a4633a16812fb0ae2a67029cd0ff229fa556dd",
+            "reason": "Duplicate nullifier"
+          }
+        ]
+      }
+    },
+    {
+      "name": "live-backed provider outage returns 503 without write",
+      "pass": true,
+      "details": {
+        "status": 503,
+        "body": {
+          "error": "getGroupAt: Injected history provider outage on live-backed fixture"
+        },
+        "ms": 760.0264000000025
+      }
+    },
+    {
+      "name": "live-backed reader provider outage is typed",
+      "pass": true,
+      "details": {
+        "error": "getGroupAt: Injected history provider outage on live-backed fixture"
+      }
+    },
+    {
+      "name": "combined balance delta matches confirmed receipt fees",
+      "pass": true
+    }
+  ],
+  "mode": "Live synthetic Tiramisu controls; existing Veil code not imported",
+  "startBalances": [
+    "9966424553952849108",
+    "9848639999697280"
+  ],
+  "rootBlock": "687541",
+  "groupKey": "0xffc9e369a4f97d0e268406d60bb0601e5ecead29de90ba369d44f4e1b49c321d",
+  "endBalances": [
+    "9965358971950717944",
+    "9696975999393952"
+  ],
+  "feesGlm": "0.001217246002434492",
+  "verdict": "GO for isolated mitigation controls on Tiramisu",
+  "limit": "Shared coordinator is one-host trusted infrastructure; complete native event history and provider retention remain dependencies. No distributed consensus, power-loss guarantee or production Veil integration established."
+}

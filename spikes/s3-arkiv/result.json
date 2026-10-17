@@ -1,0 +1,67 @@
+{
+  "started": "2026-10-17T06:47:19.456Z",
+  "admin": "0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD",
+  "project": "veil-zk-spike-1792219639456",
+  "checks": {
+    "sizesFit": true,
+    "snapshotRootMatches": true,
+    "readonlyFlag": true,
+    "readonlyUpdateBlocked": true,
+    "historicalCount": true,
+    "currentCount": true,
+    "proofRootMatchesSnapshot": true,
+    "ownershipTransferred": true,
+    "nullifierQuery": true,
+    "groupUnchangedAfterRejectedPatch": true,
+    "livePostAccepted": true
+  },
+  "errors": [],
+  "chainId": 7738577,
+  "balanceWei": "10000000000000000000",
+  "memberCount": 5,
+  "groupPayloadBytes": 144,
+  "postPayloadBytes": 1331,
+  "proofJsonBytes": 1038,
+  "postAttributeCount": 6,
+  "maxAttributeNameBytes": 9,
+  "maxStringAttributeBytes": 77,
+  "groupWriteMs": 8450.8146,
+  "groupTx": "0xb99bf1201cd8deffd73da706ddbbdf1ae4e7e414524792ea34b82864b203efe6",
+  "rootBlock": "684940",
+  "groupKey": "0x1d4de4c0fb05cb36477c74ee5268e570469866c89037cca31117a894698a4cc2",
+  "readonlyUpdateError": "Transaction failed: entity 0x1d4de4c0…8a4cc2 was created readonly, so its contents can never change. Its expiry can still be extended, and it can be transferred or deleted",
+  "extraMemberTx": "0x1a247fb01261c368975136b1673216efe1998fa066a774d209bdd8f6e98cbf1d",
+  "prototypePayloadBytes": 1102,
+  "postKey": "0x286ddd912a4d52298a18b95e94af8fe95a034765d61fffa088aba43fc411968c",
+  "postTx": "0x415c5b1d245e3f42ee89cd92ff556196cb534929c5d54fe055f37957b5c4efb9",
+  "recipient": "0xe91F1Ff61f643A8E359Eb6B3b17E6e402A9c8d1b",
+  "verdict": "GO",
+  "receipts": [
+    {
+      "hash": "0xb99bf1201cd8deffd73da706ddbbdf1ae4e7e414524792ea34b82864b203efe6",
+      "status": "success",
+      "block": "684940",
+      "gasUsed": "595280",
+      "gasCostWei": "595280001190560"
+    },
+    {
+      "hash": "0x1a247fb01261c368975136b1673216efe1998fa066a774d209bdd8f6e98cbf1d",
+      "status": "success",
+      "block": "684945",
+      "gasUsed": "100544",
+      "gasCostWei": "100544000201088"
+    },
+    {
+      "hash": "0x415c5b1d245e3f42ee89cd92ff556196cb534929c5d54fe055f37957b5c4efb9",
+      "status": "success",
+      "block": "684949",
+      "gasUsed": "151552",
+      "gasCostWei": "151552000303104"
+    }
+  ],
+  "confirmedGasCostWei": "847376001694752",
+  "balanceAfterWei": "9999152623998305248",
+  "runtime": "v22.23.3",
+  "reconciledAt": "2026-10-17T06:48:33.355Z",
+  "harnessCorrection": "Initial readonly error regex required a separator; the SDK says readonly. Reclassified using the recorded rejection and unchanged readonly group readback, without resending writes."
+}

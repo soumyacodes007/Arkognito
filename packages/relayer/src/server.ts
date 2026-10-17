@@ -1,8 +1,11 @@
 // Relayer HTTP API (spec/SPEC.md). No request logging, no IP logging (R7).
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
+import { ExpirationTime } from "@arkiv-network/sdk"
 import {
   API_VERSION,
   EXPIRY_BUCKETS,
+  type ExtendRequest,
+  fromBase64,
   OhttpGateway,
   PAD_BUCKETS,
   TIRAMISU_CHAIN_ID,
@@ -20,6 +23,7 @@ import { type ArkivClients, WriteQueue } from "./arkiv"
 import { type BatchHooks, type BatchItem, Batcher } from "./batcher"
 import type { RelayerConfig } from "./config"
 import { Heartbeat } from "./heartbeat"
+import { Keeper } from "./keeper"
 
 /** Hook for token redemption (Phase 4). Returns fields to add to the batch item, or throws to refuse. */
 export type TokenGate = {
@@ -118,6 +122,8 @@ export async function validateSubmission(body: SubmitRequest, relayer: Address, 
     expSeconds,
     receivedAt: now,
     inbox: inbox || undefined,
+    // Sealed records (real expiry): anyone may extend the lease, nobody may change the content.
+    flags: env.enc === 2 ? { permissionlessExtension: true, readonly: true } : undefined,
     minAnonymity: minAnonymity && minAnonymity > 1 ? minAnonymity : undefined,
     holdUntil: minAnonymity && minAnonymity > 1 ? now + Math.min(maxHoldMs ?? limits.maxHoldMs, limits.maxHoldMs) : undefined,
   }
@@ -155,6 +161,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
     gate?.hooks,
   )
   const limiter = new RateLimiter(cfg.ratePerMinute)
+  const keeper = cfg.keeper ? new Keeper({ address: arkiv.address, reader: arkiv.publicClient as never, log }) : undefined
   let gateway: OhttpGateway | undefined
   let heartbeat: Heartbeat | undefined
   let balance = 0n
@@ -173,6 +180,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
     maxHoldMs: cfg.maxHoldMs,
     ohttpKey: gateway?.publicKey,
     coverMinBatch: cfg.coverMinBatch || undefined,
+    keeper: keeper ? true : undefined,
   })
 
   /** The API itself, shared by direct HTTP and by requests unwrapped from OHTTP. */
@@ -212,6 +220,12 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
         batcher.enqueue(item)
         return { status: 202, body: { id: item.id } }
       }
+      if (method === "POST" && path.startsWith("/v1/keeper/")) {
+        if (!keeper) return { status: 404, body: { error: "this relayer is not a key-keeper" } }
+        if (path === "/v1/keeper/deposit" && !source.ohttp && source.ip && !limiter.allow(source.ip)) throw new HttpError(429, "too many requests")
+        return await keeper.handle(path, body)
+      }
+      if (method === "POST" && path === "/v1/extend") return await extend(body as ExtendRequest)
       const m = path.match(/^\/v1\/records\/([0-9a-f-]{36})$/)
       if (method === "GET" && m) {
         const s = batcher.status.get(m[1])
@@ -224,6 +238,46 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
     } catch (e) {
       return { status: e instanceof HttpError ? e.status : 500, body: { error: (e as Error).message } }
     }
+  }
+
+  /**
+   * Extends a sealed record this relayer wrote (created with permissionless extension). The new
+   * expiry counts from now. With tokens on, a token pays, and its spent marker lands in the same
+   * transaction as the extension.
+   */
+  async function extend(req: ExtendRequest): Promise<InnerResponse> {
+    if (!req || typeof req.entityKey !== "string") throw new HttpError(400, "entityKey is required")
+    if (!(EXPIRY_BUCKETS as readonly number[]).includes(req.expSeconds)) throw new HttpError(400, `expSeconds must be one of ${EXPIRY_BUCKETS.join("/")}`)
+    let entity
+    try {
+      entity = await arkiv.publicClient.getEntity(req.entityKey)
+    } catch {
+      throw new HttpError(410, "record has expired or does not exist")
+    }
+    if (entity.creator?.toLowerCase() !== arkiv.address.toLowerCase()) throw new HttpError(400, "this relayer did not write that record")
+    let sealed = false
+    try {
+      const env = parseEnvelope(entity.payload!)
+      sealed = env.enc === 2 && env.app === req.app
+    } catch {
+      // not an envelope
+    }
+    if (!sealed) throw new HttpError(400, "only sealed records of this app can be extended")
+    let creates: Partial<BatchItem>["sideCreates"] = []
+    if (cfg.requireTokens) {
+      if (!gate) throw new HttpError(500, "tokens required but no token gate configured")
+      if (!req.token) throw new HttpError(402, "a rate-limit token is required")
+      try {
+        creates = (await gate.redeem({ app: req.app, token: req.token } as SubmitRequest)).sideCreates ?? []
+      } catch (e) {
+        throw new HttpError(403, (e as Error).message)
+      }
+    }
+    const res = await writer.run(() =>
+      arkiv.walletClient.executeBatch({ creates, extensions: [{ entityKey: req.entityKey, expires: ExpirationTime.fromSeconds(req.expSeconds) }] }),
+    )
+    const after = await arkiv.publicClient.getEntity(req.entityKey)
+    return { status: 200, body: { txHash: res.txHash, expiresAt: after.expiresAt?.toString() } }
   }
 
   const server = createServer(async (req, res) => {
@@ -280,6 +334,7 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
     get ohttpKey() {
       return gateway?.publicKey
     },
+    keeper,
     async listen() {
       // The gateway key derives from the relayer's own key, so it is stable across restarts.
       if (cfg.ohttp) gateway = await OhttpGateway.fromSeed(hexToBytes(cfg.privateKey))
@@ -287,14 +342,16 @@ export function startRelayer(cfg: RelayerConfig, arkiv: ArkivClients, gate?: Tok
       await checkBalance()
       balanceTimer = setInterval(() => void checkBalance(), 60_000)
       batcher.start()
+      keeper?.start(cfg.keeperSweepMs)
       if (cfg.requireTokens) gate?.monitor?.start()
       if (cfg.heartbeat) await heartbeat.start(cfg.heartbeatEveryMs)
       await new Promise<void>((r) => server.listen(cfg.port, r))
-      log(`listening on :${cfg.port} as ${arkiv.address} (k=${cfg.minBatch}, maxWait=${cfg.maxWaitMs}ms, cover=${cfg.coverMinBatch || "off"}, ohttp=${!!gateway}, evil=${cfg.evil})`)
+      log(`listening on :${cfg.port} as ${arkiv.address} (k=${cfg.minBatch}, maxWait=${cfg.maxWaitMs}ms, cover=${cfg.coverMinBatch || "off"}, keeper=${cfg.keeper ? "on" : "off"}, ohttp=${!!gateway}, evil=${cfg.evil})`)
     },
     async close() {
       clearInterval(balanceTimer)
       batcher.stop()
+      keeper?.stop()
       heartbeat?.stop()
       gate?.monitor?.stop()
       await new Promise<void>((r) => server.close(() => r()))

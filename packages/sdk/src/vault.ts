@@ -13,7 +13,7 @@ import type { Address, Hex } from "viem"
 export type KeyRef = { kind: "record" | "scope" | "inbox"; id: Hex }
 
 /** The envelope fields a record signature covers (see envelope.ts). */
-export type EnvelopeBody = { app: string; ct: string; exp: number; enc: 0 | 1; data: string }
+export type EnvelopeBody = { app: string; ct: string; exp: number; enc: 0 | 1 | 2; data: string }
 
 /** The fields an ownership proof signs (see proof.ts). */
 export type ProofBody = { entityKey: Hex; challenge: string; verifier: string; expiresAt: number; chainId: number }

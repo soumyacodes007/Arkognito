@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*
+artifacts/
+public/artifacts/
+*.eml
+state/

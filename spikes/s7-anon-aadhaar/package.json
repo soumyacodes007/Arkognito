@@ -1,0 +1,12 @@
+{
+  "name": "s7-anon-aadhaar",
+  "scripts": {
+    "start": "node run.mjs"
+  },
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anon-aadhaar/core": "2.4.3",
+    "@anon-aadhaar/react": "2.4.3"
+  }
+}

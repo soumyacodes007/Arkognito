@@ -1,0 +1,20 @@
+{
+  "started": "2026-10-17T07:21:14.166Z",
+  "runtime": "v22.23.3",
+  "compiler": "official native Circom 2.2.3 (publisher SHA-256 checked)",
+  "stages": [
+    {
+      "name": "verify-public-DKIM",
+      "at": "2026-10-17T07:21:14.170Z"
+    },
+    {
+      "name": "compile",
+      "at": "2026-10-17T07:21:15.889Z"
+    }
+  ],
+  "note": "Standalone library circuit, not Registry blueprint. Public upstream sample, local proving only; no email data/proof/public signals sent to Arkiv. Local experimental setup is not a production trusted setup.",
+  "dkimVerified": true,
+  "domain": "icloud.com",
+  "maxHeaderBytes": 576,
+  "maxBodyBytes": 192
+}

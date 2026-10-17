@@ -1,0 +1,31 @@
+{
+  "started": "2026-10-17T06:55:45.473Z",
+  "runtime": "v22.23.3",
+  "runs": [
+    {
+      "cpuThrottleRate": 1,
+      "members": 4096,
+      "depth": 12,
+      "crossOriginIsolated": false,
+      "buildMs": 869.5999999046326,
+      "proofMs": 5497.799999952316,
+      "verified": true,
+      "verifyMs": 18.100000143051147,
+      "jsonBytes": 897
+    },
+    {
+      "cpuThrottleRate": 4,
+      "members": 4096,
+      "depth": 12,
+      "crossOriginIsolated": false,
+      "buildMs": 3386.2000000476837,
+      "proofMs": 994.0999999046326,
+      "verified": true,
+      "verifyMs": 64.90000009536743,
+      "jsonBytes": 901
+    }
+  ],
+  "note": "Desktop headless Chrome with optional CPU throttling; not a measurement of physical mobile hardware.",
+  "browserVersion": "154.0.8037.100",
+  "verdict": "GO"
+}

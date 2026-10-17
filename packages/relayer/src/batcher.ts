@@ -1,6 +1,6 @@
 // Batching (B1, B2, R5): wait for k requests or a max wait, never flush more often than every
 // N blocks, shuffle, then one executeBatch that creates every record and hands each to its owner.
-import { type AttributeInputs, type CreateEntityParameters, ExpirationTime } from "@arkiv-network/sdk"
+import { type AttributeInputs, type CreateEntityParameters, type CreationFlags, ExpirationTime } from "@arkiv-network/sdk"
 import type { StatusResponse } from "arkognito"
 import type { Address, Hex } from "viem"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
@@ -26,6 +26,8 @@ export type BatchItem = {
   inbox?: boolean
   /** Added by the relayer to fill a small batch (B5). Nobody is waiting for it. */
   cover?: boolean
+  /** Creation flags. Sealed records are created extendable by anyone and read-only. */
+  flags?: CreationFlags
 }
 
 export type BatchHooks = {
@@ -172,6 +174,7 @@ export class Batcher {
           attributes: it.attributes,
           expires: ExpirationTime.fromSeconds(it.expSeconds),
           salt: predicted[i].salt,
+          ...(it.flags ? { flags: it.flags } : {}),
         })),
         ...side.map((c, j) => ({ ...c, salt: predicted[batch.length + j].salt })),
       ]

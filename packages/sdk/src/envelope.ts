@@ -21,8 +21,11 @@ export type Envelope = {
   app: string
   ct: string
   exp: number
-  /** 1 when `data` is encrypted to the owner (AES-256-GCM, iv || ciphertext). */
-  enc: 0 | 1
+  /**
+   * 0: plaintext. 1: encrypted to the owner (AES-256-GCM, iv || ciphertext). 2: sealed, the key held
+   * by key-keepers only while the record lives (seal.ts).
+   */
+  enc: 0 | 1 | 2
   data: string
   sig: Hex
   pad?: string
@@ -103,19 +106,21 @@ export async function sealEnvelope(params: {
   expSeconds: number
   /** Set when `payload` is already encrypted to the owner. */
   encrypted?: boolean
+  /** Set when `payload` is a sealed payload (seal.ts). */
+  sealed?: boolean
 }): Promise<{ payload: Uint8Array; envelope: Envelope; text: string }> {
   const body = {
     v: ENVELOPE_VERSION,
     app: params.app,
     ct: params.contentType,
     exp: params.expSeconds,
-    enc: (params.encrypted ? 1 : 0) as 0 | 1,
+    enc: (params.sealed ? 2 : params.encrypted ? 1 : 0) as 0 | 1 | 2,
     data: toBase64(params.payload),
   }
   const sig = await params.signer.signEnvelope(body, params.attributes)
   // Size as if encrypted (12-byte IV + 16-byte GCM tag), so a plaintext record and an encrypted one
   // of the same input land in the same size bucket: encryption must not stand out.
-  const encryptedLength = Math.ceil((params.payload.length + (params.encrypted ? 0 : 28)) / 3) * 4
+  const encryptedLength = Math.ceil((params.payload.length + (params.encrypted || params.sealed ? 0 : 28)) / 3) * 4
   const text = padEnvelope({ ...body, sig }, encryptedLength - body.data.length)
   return { payload: enc.encode(text), envelope: JSON.parse(text) as Envelope, text }
 }
@@ -123,7 +128,7 @@ export async function sealEnvelope(params: {
 export function parseEnvelope(payload: Uint8Array | string): Envelope {
   const text = typeof payload === "string" ? payload : dec.decode(payload)
   const e = JSON.parse(text) as Envelope
-  if (e?.v !== ENVELOPE_VERSION || typeof e.data !== "string" || typeof e.sig !== "string" || (e.enc !== 0 && e.enc !== 1)) {
+  if (e?.v !== ENVELOPE_VERSION || typeof e.data !== "string" || typeof e.sig !== "string" || (e.enc !== 0 && e.enc !== 1 && e.enc !== 2)) {
     throw new Error("not a Arkognito v1 envelope")
   }
   return e

@@ -35,6 +35,9 @@ export function loadConfig(overrides: Record<string, string | undefined> = {}) {
     minIntervalBlocks: num("MIN_INTERVAL_BLOCKS", 5),
     // B5: fill batches smaller than this with cover records (costs gas). 0 = off.
     coverMinBatch: num("COVER_MIN_BATCH", 0),
+    // Real expiry: hold shares of sealed records' keys while they live (seal.ts). Memory only.
+    keeper: (env.KEEPER ?? "off") === "on",
+    keeperSweepMs: num("KEEPER_SWEEP_MS", 10_000),
     heartbeat: (env.HEARTBEAT ?? "on") !== "off",
     heartbeatEveryMs: num("HEARTBEAT_EVERY_MS", 120_000),
     lowBalanceGlm: num("LOW_BALANCE_GLM", 0.2),

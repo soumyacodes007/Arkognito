@@ -1,0 +1,21 @@
+{
+  "started": "2026-10-17T07:05:51.460Z",
+  "runtime": "v22.23.3",
+  "stages": [
+    {
+      "name": "verify-public-DKIM",
+      "at": "2026-10-17T07:05:51.464Z"
+    },
+    {
+      "name": "compile",
+      "at": "2026-10-17T07:05:52.647Z"
+    }
+  ],
+  "note": "Standalone library circuit, not Registry blueprint. Public upstream sample, local proving only; no email data/proof/public signals sent to Arkiv. Local experimental setup is not a production trusted setup.",
+  "dkimVerified": true,
+  "domain": "icloud.com",
+  "maxHeaderBytes": 576,
+  "maxBodyBytes": 192,
+  "error": "Error: Compiler exit 4294967295: \u001b[32mtemplate instances\u001b[0m: 239\nnon-linear constraints: 905904\nlinear constraints: 258453\npublic inputs: 0\nprivate inputs: 837\npublic outputs: 3\nwires: 1139960\nlabels: 3780799\n\u001b[32mWritten successfully:\u001b[0m state/main.r1cs\n\n    at ChildProcess.<anonymous> (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/risk-email-local/run.mjs:9:374)\n    at ChildProcess.emit (node:events:519:28)\n    at maybeClose (node:internal/child_process:1101:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:304:5)",
+  "verdict": "RISKY"
+}

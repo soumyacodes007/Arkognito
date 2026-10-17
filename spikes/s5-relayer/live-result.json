@@ -1,0 +1,30 @@
+{
+  "started": "2026-10-17T06:49:09.898Z",
+  "mode": "live",
+  "runtime": "v22.23.3",
+  "tamper": {
+    "status": 400,
+    "body": {
+      "error": "Content hash mismatch"
+    },
+    "elapsedMs": 393.2150999999999
+  },
+  "valid": {
+    "status": 201,
+    "body": {
+      "txHash": "0x9f15b3a7b2fa0a49a9002a2826d0ad1de46166c118fc776c3c25386b49571e7e",
+      "entityKey": "0x86845fc20399c6a60bf7c4af9c980e363da483f010ce259773c52ebbe817e600",
+      "owner": "0xe91F1Ff61f643A8E359Eb6B3b17E6e402A9c8d1b"
+    },
+    "elapsedMs": 13250.251099999998
+  },
+  "replay": {
+    "status": 409,
+    "body": {
+      "error": "Nullifier already reserved"
+    },
+    "elapsedMs": 2292.203400000002
+  },
+  "pass": true,
+  "verdict": "GO"
+}

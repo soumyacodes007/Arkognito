@@ -1,0 +1,10 @@
+import {createPublicClient} from '@arkiv-network/sdk';import {tiramisu} from '@arkiv-network/sdk/chains';import {http} from 'viem';
+import {readFileSync,existsSync,appendFileSync} from 'node:fs';
+import {proofRelayer} from '../s5-relayer/server.mjs';import {arkivStore} from '../s4-verify-read/read-posts.mjs';
+import {rpcOptions} from './rpc-options.mjs';
+const [fixturePath,journalPath,auditPath,mode]=process.argv.slice(2);const f=JSON.parse(readFileSync(fixturePath));
+const seen=new Set(mode==='durable'&&existsSync(journalPath)?readFileSync(journalPath,'utf8').trim().split('\n').filter(Boolean).map(l=>JSON.parse(l).id):[]);
+const reader=createPublicClient({chain:tiramisu,cacheTime:0,transport:http(tiramisu.rpcUrls.default.http[0],rpcOptions())});
+const store=arkivStore(reader,{project:f.project,admin:f.admin,groupKey:f.groupKey,trustedRelayers:[f.admin]});
+const {server}=proofRelayer({group:f.project,store,write:async p=>{const id=`${f.project}|${p.proof.scope}|${p.proof.nullifier}`;if(seen.has(id))throw Error('Pending reservation survives process restart; reconcile before resubmission');seen.add(id);if(mode==='durable')appendFileSync(journalPath,JSON.stringify({id,state:'uncertain'})+'\n',{flush:true});appendFileSync(auditPath,JSON.stringify({pid:process.pid,attempt:true})+'\n',{flush:true});throw Error('Injected uncertain outcome; no actual broadcast in this test');}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));console.log(JSON.stringify({port:server.address().port,pid:process.pid}));

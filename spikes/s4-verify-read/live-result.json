@@ -1,0 +1,39 @@
+{
+  "started": "2026-10-17T06:48:39.910Z",
+  "mode": "live",
+  "runtime": "v22.23.3",
+  "txHash": "0x2efac2c06be22d21320a8761e8b142b6063ec61b4f31a7ccaeb17a526d60ee34",
+  "writeMs": 5577.7734,
+  "fixtureKeys": {
+    "fake": "0x7824452595798e8891989cc1631f0cc62795bc56d87bb927eba1d4ba3f823ee4",
+    "duplicate": "0x1f23fe5fa55ab20ea7bc7d05685ce8bab68608a40345940238dae18d24ae981c",
+    "non-member": "0x667f526ffa377774e0a8b327a7bfd8e2809613d9b29317d0785a674ed146fa71",
+    "edited": "0xbc9e909c6acc77a02bacffde1fd4ccdce7f09c216ff47c9aa3b77ec210b363f1"
+  },
+  "block": "684980",
+  "gasCostWei": "596176001192352",
+  "readMs": 7806.083700000001,
+  "accepted": [
+    "0x286ddd912a4d52298a18b95e94af8fe95a034765d61fffa088aba43fc411968c"
+  ],
+  "rejected": [
+    {
+      "key": "0x1f23fe5fa55ab20ea7bc7d05685ce8bab68608a40345940238dae18d24ae981c",
+      "reason": "Duplicate nullifier"
+    },
+    {
+      "key": "0x667f526ffa377774e0a8b327a7bfd8e2809613d9b29317d0785a674ed146fa71",
+      "reason": "Historical membership root mismatch"
+    },
+    {
+      "key": "0x7824452595798e8891989cc1631f0cc62795bc56d87bb927eba1d4ba3f823ee4",
+      "reason": "Invalid Semaphore proof"
+    },
+    {
+      "key": "0xbc9e909c6acc77a02bacffde1fd4ccdce7f09c216ff47c9aa3b77ec210b363f1",
+      "reason": "Content hash mismatch"
+    }
+  ],
+  "pass": true,
+  "verdict": "GO"
+}

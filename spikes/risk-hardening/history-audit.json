@@ -1,0 +1,115 @@
+{
+  "started": "2026-10-17T08:17:11.369Z",
+  "runtime": "v22.23.3",
+  "mode": "Independent read-only receipt/history verification",
+  "checks": [
+    {
+      "name": "all six readonly post publications recovered",
+      "pass": true
+    },
+    {
+      "name": "two live canonical posts, three spent identities",
+      "pass": true
+    },
+    {
+      "name": "deleted winner still consumes nullifier",
+      "pass": true
+    },
+    {
+      "name": "fake and both duplicates rejected",
+      "pass": true
+    },
+    {
+      "name": "independent receipt order agrees with first batch create",
+      "pass": true
+    }
+  ],
+  "snapshot": "687633",
+  "posts": 6,
+  "accepted": [
+    "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+    "0xedc2e5f7c10d87e279bb528f98b3586b23fa49f8055132fbb55eae0b0012bc8a"
+  ],
+  "spent": [
+    {
+      "key": "0xd1a50aa2f40e1a4c60bc4374f62251e0e1b280e11b887faa31484eafdc0defa9",
+      "nullifier": "455421598429296943868536617380770284176071124671972572749772108154928904693",
+      "live": false
+    },
+    {
+      "key": "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+      "nullifier": "17984734695058146664562386436308194185265580089422899806347805108516961761462",
+      "live": true
+    },
+    {
+      "key": "0xedc2e5f7c10d87e279bb528f98b3586b23fa49f8055132fbb55eae0b0012bc8a",
+      "nullifier": "20198671585262198964738009686280392118619399317889029406778633011898965671291",
+      "live": true
+    }
+  ],
+  "rejected": [
+    {
+      "key": "0xd8bf38ae9ebeaa32e52a4f00130472c6d62067319ce2be242362eccc16f7f3fe",
+      "reason": "Invalid Semaphore proof"
+    },
+    {
+      "key": "0x9741d2822617c2f6cb952aaaf11c857f645105e29e5b256ac12fc4a1ada77262",
+      "reason": "Duplicate nullifier"
+    },
+    {
+      "key": "0x5782622f658e5290b1ef1d87f2a4633a16812fb0ae2a67029cd0ff229fa556dd",
+      "reason": "Duplicate nullifier"
+    }
+  ],
+  "positions": [
+    {
+      "key": "0xd8bf38ae9ebeaa32e52a4f00130472c6d62067319ce2be242362eccc16f7f3fe",
+      "position": {
+        "block": "687545",
+        "transactionIndex": 0,
+        "logIndex": 0
+      }
+    },
+    {
+      "key": "0xd1a50aa2f40e1a4c60bc4374f62251e0e1b280e11b887faa31484eafdc0defa9",
+      "position": {
+        "block": "687552",
+        "transactionIndex": 0,
+        "logIndex": 0
+      }
+    },
+    {
+      "key": "0x9741d2822617c2f6cb952aaaf11c857f645105e29e5b256ac12fc4a1ada77262",
+      "position": {
+        "block": "687560",
+        "transactionIndex": 0,
+        "logIndex": 0
+      }
+    },
+    {
+      "key": "0x5f4354953ba0b2590511dcd835e39f05bfaacad4a588dcdea9f35c8c2c548428",
+      "position": {
+        "block": "687582",
+        "transactionIndex": 0,
+        "logIndex": 0
+      }
+    },
+    {
+      "key": "0x5782622f658e5290b1ef1d87f2a4633a16812fb0ae2a67029cd0ff229fa556dd",
+      "position": {
+        "block": "687582",
+        "transactionIndex": 0,
+        "logIndex": 1
+      }
+    },
+    {
+      "key": "0xedc2e5f7c10d87e279bb528f98b3586b23fa49f8055132fbb55eae0b0012bc8a",
+      "position": {
+        "block": "687598",
+        "transactionIndex": 0,
+        "logIndex": 0
+      }
+    }
+  ],
+  "verdict": "GO"
+}

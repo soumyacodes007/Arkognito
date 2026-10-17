@@ -1,0 +1,79 @@
+{
+  "started": "2026-10-17T06:49:54.203Z",
+  "runtime": "v22.23.3",
+  "address": "0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD",
+  "checks": {
+    "relayerOwnerReadback": true,
+    "relayerReadonly": true,
+    "twoIndependentValidPosts": true,
+    "allLiveSpikesPassed": true,
+    "balanceMatchesConfirmedGas": true
+  },
+  "receipts": [
+    {
+      "hash": "0xb99bf1201cd8deffd73da706ddbbdf1ae4e7e414524792ea34b82864b203efe6",
+      "block": "684940",
+      "gasUsed": "595280",
+      "costWei": "595280001190560",
+      "status": "success"
+    },
+    {
+      "hash": "0x1a247fb01261c368975136b1673216efe1998fa066a774d209bdd8f6e98cbf1d",
+      "block": "684945",
+      "gasUsed": "100544",
+      "costWei": "100544000201088",
+      "status": "success"
+    },
+    {
+      "hash": "0x415c5b1d245e3f42ee89cd92ff556196cb534929c5d54fe055f37957b5c4efb9",
+      "block": "684949",
+      "gasUsed": "151552",
+      "costWei": "151552000303104",
+      "status": "success"
+    },
+    {
+      "hash": "0x2efac2c06be22d21320a8761e8b142b6063ec61b4f31a7ccaeb17a526d60ee34",
+      "block": "684980",
+      "gasUsed": "596176",
+      "costWei": "596176001192352",
+      "status": "success"
+    },
+    {
+      "hash": "0x9f15b3a7b2fa0a49a9002a2826d0ad1de46166c118fc776c3c25386b49571e7e",
+      "block": "684997",
+      "gasUsed": "151504",
+      "costWei": "151504000303008",
+      "status": "success"
+    }
+  ],
+  "chainId": 7738577,
+  "finalReadMs": 9843.2884,
+  "accepted": [
+    "0x286ddd912a4d52298a18b95e94af8fe95a034765d61fffa088aba43fc411968c",
+    "0x86845fc20399c6a60bf7c4af9c980e363da483f010ce259773c52ebbe817e600"
+  ],
+  "rejected": [
+    {
+      "key": "0x1f23fe5fa55ab20ea7bc7d05685ce8bab68608a40345940238dae18d24ae981c",
+      "reason": "Duplicate nullifier"
+    },
+    {
+      "key": "0x667f526ffa377774e0a8b327a7bfd8e2809613d9b29317d0785a674ed146fa71",
+      "reason": "Historical membership root mismatch"
+    },
+    {
+      "key": "0x7824452595798e8891989cc1631f0cc62795bc56d87bb927eba1d4ba3f823ee4",
+      "reason": "Invalid Semaphore proof"
+    },
+    {
+      "key": "0xbc9e909c6acc77a02bacffde1fd4ccdce7f09c216ff47c9aa3b77ec210b363f1",
+      "reason": "Content hash mismatch"
+    }
+  ],
+  "snapshot": "685016",
+  "balanceWei": "9998404943996809888",
+  "balanceGlm": "9.998404943996809888",
+  "gasCostWei": "1595056003190112",
+  "gasCostGlm": "0.001595056003190112",
+  "verdict": "GO"
+}

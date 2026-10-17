@@ -1,0 +1,16 @@
+{
+  "license": "MIT",
+  "private": true,
+  "name": "risk-hardening",
+  "type": "module",
+  "scripts": {
+    "start": "node run.mjs"
+  },
+  "dependencies": {
+    "@arkiv-network/sdk": "0.8.1",
+    "@semaphore-protocol/group": "4.14.4",
+    "@semaphore-protocol/identity": "4.14.4",
+    "@semaphore-protocol/proof": "4.14.4",
+    "viem": "2.57.4"
+  }
+}

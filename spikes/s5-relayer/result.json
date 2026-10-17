@@ -1,0 +1,59 @@
+{
+  "started": "2026-10-17T06:34:02.816Z",
+  "mode": "Real HTTP and Semaphore cryptography, synthetic in-memory group; separate live Arkiv write attempt",
+  "cases": [
+    {
+      "name": "message tamper",
+      "pass": true,
+      "status": 400,
+      "body": {
+        "error": "Content hash mismatch"
+      },
+      "elapsedMs": 45.38310000000001
+    },
+    {
+      "name": "owner redirect",
+      "pass": true,
+      "status": 400,
+      "body": {
+        "error": "Owner binding mismatch"
+      },
+      "elapsedMs": 6.10590000000002
+    },
+    {
+      "name": "concurrent double submit",
+      "pass": true,
+      "responses": [
+        {
+          "status": 201,
+          "body": {
+            "entityKey": "synthetic-in-memory-key",
+            "owner": "0x1234567890123456789012345678901234567890"
+          },
+          "elapsedMs": 515.3926000000001
+        },
+        {
+          "status": 409,
+          "body": {
+            "error": "Nullifier already reserved"
+          },
+          "elapsedMs": 559.1967
+        }
+      ]
+    }
+  ],
+  "inMemoryWrites": 1,
+  "chainId": 7738577,
+  "balanceWei": "0",
+  "liveAttempt": {
+    "status": 503,
+    "body": {
+      "error": "Transaction failed: Execution error without revert data",
+      "detail": "Write outcome requires reconciliation; reservation retained, no automatic resend"
+    },
+    "elapsedMs": 2738.7547000000004
+  },
+  "localChecksPassed": true,
+  "verdict": "RISKY",
+  "blocker": "Live create/transfer failed; HTTP admission used a synthetic group adapter, so no chain-backed relayer claim is established"
+}

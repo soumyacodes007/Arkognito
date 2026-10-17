@@ -1,0 +1,73 @@
+import {createPublicClient,createWalletClient,ExpirationTime,jsonToPayload} from '@arkiv-network/sdk';
+import {tiramisu} from '@arkiv-network/sdk/chains';
+import {eq} from '@arkiv-network/sdk/query';
+import {u256,u64} from '@arkiv-network/sdk/attr';
+import {http} from 'viem';
+import {privateKeyToAccount,generatePrivateKey} from 'viem/accounts';
+import {Group} from '@semaphore-protocol/group';
+import {Identity} from '@semaphore-protocol/identity';
+import {generateProof} from '@semaphore-protocol/proof';
+import {randomBytes} from 'node:crypto';
+import {contentMessage,windowScope} from '../s4-verify-read/read-posts.mjs';
+import {readFileSync,writeFileSync} from 'node:fs';
+
+const fixture=JSON.parse(readFileSync(new URL('../s1-semaphore-node/fixture.json',import.meta.url)));
+const key=readFileSync(new URL('../.env',import.meta.url),'utf8').match(/^SPIKE_PRIVATE_KEY=(0x[0-9a-f]{64})$/m)?.[1];
+const account=privateKeyToAccount(key);
+const transport=()=>http(tiramisu.rpcUrls.default.http[0],{timeout:15000,retryCount:0,fetchOptions:{redirect:'error'}});
+export const reader=createPublicClient({chain:tiramisu,cacheTime:0,transport:transport()});
+const wallet=createWalletClient({chain:tiramisu,account,transport:transport()});
+const project=`veil-zk-spike-${Date.now()}`;
+const result={started:new Date().toISOString(),admin:account.address,project,checks:{},errors:[]};
+const create=(type,data,attributes={},readonly=true)=>({payload:jsonToPayload(data),contentType:'application/json',attributes:{project,type,...attributes},expires:ExpirationTime.fromDays(1),flags:{readonly}});
+const query=async(type,block,filters=[])=>{const out=[];for await(const e of reader.select({key:true,attributes:true,payload:true,owner:true,creator:true,createdAt:true,creationFlags:true}).where(eq('project',project),eq('type',type),...filters).createdBy(account.address).atBlock(block).limit(200))out.push(e);return out;};
+const save=()=>writeFileSync(new URL('result.json',import.meta.url),JSON.stringify(result,(_,v)=>typeof v==='bigint'?v.toString():v,2));
+try{
+ result.chainId=await reader.getChainId();if(result.chainId!==7738577)throw Error(`Wrong chain ${result.chainId}`);
+ result.balanceWei=(await reader.getBalance({address:account.address})).toString();
+ const identities=Array.from({length:5},()=>new Identity(randomBytes(32)));
+ const commitments=identities.map(id=>id.commitment.toString());
+ const creates=[create('group',{name:'Synthetic five-member group',chainId:7738577,depth:3,admin:account.address,indexOrder:'ascending'}),...commitments.map((c,i)=>create('member',{synthetic:true},{memberindex:i,commitment:u256(BigInt(c))}))];
+ result.memberCount=commitments.length;
+ result.groupPayloadBytes=creates[0].payload.length;
+ const prototype=create('post',{content:fixture.content,proof:fixture.proof},{nullifier:fixture.proof.nullifier,root:fixture.proof.merkleTreeRoot,rootblock:u64(await reader.getBlockNumber()),scope:fixture.proof.scope});
+ result.postPayloadBytes=prototype.payload.length;result.proofJsonBytes=Buffer.byteLength(JSON.stringify(fixture.proof));
+ result.postAttributeCount=Object.keys(prototype.attributes).length;
+ result.maxAttributeNameBytes=Math.max(...Object.keys(prototype.attributes).map(x=>Buffer.byteLength(x)));
+ result.maxStringAttributeBytes=Math.max(...Object.values(prototype.attributes).filter(x=>typeof x==='string').map(x=>Buffer.byteLength(x)));
+ result.checks.sizesFit=result.postPayloadBytes<128*1024&&result.postAttributeCount<=32&&result.maxAttributeNameBytes<=32&&result.maxStringAttributeBytes<=128;
+ // One writer, no retries: an ambiguous send stops the entire live spike.
+ const t=performance.now();const batch=await wallet.executeBatch({creates});result.groupWriteMs=performance.now()-t;result.groupTx=batch.txHash;
+ const receipt=await reader.getTransactionReceipt({hash:batch.txHash});if(receipt.status!=='success')throw Error('Group receipt reverted');
+ const snapshot=receipt.blockNumber;result.rootBlock=snapshot.toString();result.groupKey=batch.createdEntities[0];
+ const members=await query('member',snapshot);members.sort((a,b)=>Number(a.attributes.memberindex.value)-Number(b.attributes.memberindex.value));
+ const rebuilt=new Group(members.map(e=>BigInt(e.attributes.commitment.value)));
+ result.checks.snapshotRootMatches=rebuilt.root===new Group(identities.map(id=>id.commitment)).root;
+ const groupEntity=await reader.getEntity(result.groupKey);result.checks.readonlyFlag=groupEntity.creationFlags.readonly;
+ try{await wallet.patchEntity({entityKey:result.groupKey,payload:jsonToPayload({edited:true})});result.checks.readonlyUpdateBlocked=false;}
+ catch(e){result.readonlyUpdateError=e.message;result.checks.readonlyUpdateBlocked=/read.?only|ReadOnlyEntity/i.test(e.message);if(e.txHash)throw e;}
+ const extra=await wallet.createEntity(create('member',{synthetic:true},{memberindex:5,commitment:u256(123456789n)}));result.extraMemberTx=extra.txHash;
+ const head=await reader.getBlockNumber({cacheTime:0});result.checks.historicalCount=(await query('member',snapshot)).length===5;result.checks.currentCount=(await query('member',head)).length===6;
+ const recipient=privateKeyToAccount(generatePrivateKey()).address;
+ const scope=windowScope(project,new Date().toISOString().slice(0,13));
+ const content={version:1,chainId:7738577,group:project,scope,rootBlock:snapshot.toString(),owner:recipient.toLowerCase(),text:'Synthetic Arkiv membership post'};
+ const proof=await generateProof(identities[0],rebuilt,contentMessage(content),scope,3);
+ result.checks.proofRootMatchesSnapshot=proof.merkleTreeRoot===rebuilt.root.toString();
+ const relayContent={...content,text:'Synthetic proof-gated relay post'};
+ const relayProof=await generateProof(identities[1],rebuilt,contentMessage(relayContent),scope,3);
+ const outsider=new Identity(randomBytes(32));const outsiderGroup=new Group([outsider,...identities.slice(1)].map(i=>i.commitment));
+ const outsiderProof=await generateProof(outsider,outsiderGroup,contentMessage(content),scope,3);
+ const livePrototype=create('post',{content,proof},{nullifier:proof.nullifier,root:proof.merkleTreeRoot,rootblock:u64(snapshot),scope});
+ result.prototypePayloadBytes=result.postPayloadBytes;
+ result.postPayloadBytes=livePrototype.payload.length;result.proofJsonBytes=Buffer.byteLength(JSON.stringify(proof));
+ result.maxStringAttributeBytes=Math.max(...Object.values(livePrototype.attributes).filter(x=>typeof x==='string').map(x=>Buffer.byteLength(x)));
+ result.checks.sizesFit=result.postPayloadBytes<128*1024&&result.postAttributeCount<=32&&result.maxAttributeNameBytes<=32&&result.maxStringAttributeBytes<=128;
+ const predicted=await reader.predictEntityKeys({owner:account.address,count:1});
+ const post=await wallet.executeBatch({creates:[{...livePrototype,salt:predicted[0].salt}],ownershipChanges:[{entityKey:predicted[0].key,newOwner:recipient}]});
+ result.postKey=post.createdEntities[0];result.postTx=post.txHash;result.recipient=recipient;
+ result.checks.ownershipTransferred=(await reader.getEntity(result.postKey)).owner.toLowerCase()===recipient.toLowerCase();
+ const byNullifier=await query('post',await reader.getBlockNumber({cacheTime:0}),[eq('nullifier',proof.nullifier)]);result.checks.nullifierQuery=byNullifier.some(e=>e.key===result.postKey);
+ result.verdict=Object.values(result.checks).every(Boolean)?'GO':'RISKY';
+ writeFileSync(new URL('live.json',import.meta.url),JSON.stringify({project,admin:account.address,rootBlock:snapshot.toString(),groupKey:result.groupKey,postKey:result.postKey,content,proof,relayContent,relayProof,outsiderProof}));
+}catch(e){result.verdict='RISKY';result.error=e.stack;result.txHash=e.txHash;result.blocker=result.balanceWei==='0'?'Fresh throwaway wallet unfunded; live write/read/mutation/transfer checks not established':'See exact error';}
+save();console.log(JSON.stringify(result,(_,v)=>typeof v==='bigint'?v.toString():v,2));process.exit(result.error?1:0);

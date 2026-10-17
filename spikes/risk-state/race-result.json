@@ -1,0 +1,130 @@
+{
+  "started": "2026-10-17T07:03:52.803Z",
+  "runtime": "v22.23.3",
+  "project": "veil-race-1792220516113",
+  "accessKeyConfigured": true,
+  "receipts": [
+    {
+      "hash": "0x0f871bbf9ef0cde984a3a4fb8f09677e1a2354531e51475f81d974907977de21",
+      "sender": "0x3fe24fB501DaBc90EBe6413110F936c646CEba5F",
+      "block": "685455",
+      "gasCostWei": "151360000302720"
+    },
+    {
+      "hash": "0x6094c8d02c53c9b72ff7b62cc662d05759bf0695da69d8b4780a470512a61a38",
+      "sender": "0x1A742FA770502259b954E9e3e5FD8cE6EdD005dD",
+      "block": "685455",
+      "gasCostWei": "131360000262720"
+    }
+  ],
+  "checks": [
+    {
+      "name": "real process restart repeats volatile uncertain write",
+      "pass": true
+    },
+    {
+      "name": "durable pending guard prevents retry after real process restart",
+      "pass": true
+    },
+    {
+      "name": "both independent relayers admitted one nullifier",
+      "pass": true
+    },
+    {
+      "name": "reader keeps one canonical duplicate",
+      "pass": true
+    }
+  ],
+  "malformed": {
+    "requestError": "fetch failed",
+    "exitCode": 1,
+    "stderr": "file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s5-relayer/server.mjs:12\r\n   const {entity,proof}=body;const scope=windowScope(group,now().toISOString().slice(0,13));\r\n          ^\r\n\r\nTypeError: Cannot destructure property 'entity' of 'body' as it is null.\r\n    at file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s5-relayer/server.mjs:12:11\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\r\n\r\nNode.js v22.23.3\r\n"
+  },
+  "previousFailure": "HTTP 429 ANON_COST_LIMITED; no race post write callback reached",
+  "startBalances": [
+    "9966555913953111828",
+    "10000000000000000"
+  ],
+  "restartTests": [
+    {
+      "mode": "volatile",
+      "observations": [
+        {
+          "pid": 86864,
+          "status": 503,
+          "body": {
+            "error": "Injected uncertain outcome; no actual broadcast in this test",
+            "detail": "Write outcome requires reconciliation; reservation retained, no automatic resend"
+          }
+        },
+        {
+          "pid": 88260,
+          "status": 503,
+          "body": {
+            "error": "Injected uncertain outcome; no actual broadcast in this test",
+            "detail": "Write outcome requires reconciliation; reservation retained, no automatic resend"
+          }
+        }
+      ],
+      "actualWriterCalls": 2,
+      "noBroadcast": true
+    },
+    {
+      "mode": "durable",
+      "observations": [
+        {
+          "pid": 52952,
+          "status": 503,
+          "body": {
+            "error": "Injected uncertain outcome; no actual broadcast in this test",
+            "detail": "Write outcome requires reconciliation; reservation retained, no automatic resend"
+          }
+        },
+        {
+          "pid": 84620,
+          "status": 503,
+          "body": {
+            "error": "Pending reservation survives process restart; reconcile before resubmission",
+            "detail": "Write outcome requires reconciliation; reservation retained, no automatic resend"
+          }
+        }
+      ],
+      "actualWriterCalls": 1,
+      "noBroadcast": true
+    }
+  ],
+  "raceResponses": [
+    {
+      "status": 201,
+      "body": {
+        "txHash": "0x6094c8d02c53c9b72ff7b62cc662d05759bf0695da69d8b4780a470512a61a38",
+        "entityKey": "0x4158fce6ab705efbf924c298743b1d300a5d4fb0c5567d137fddca209539b175"
+      }
+    },
+    {
+      "status": 201,
+      "body": {
+        "txHash": "0x0f871bbf9ef0cde984a3a4fb8f09677e1a2354531e51475f81d974907977de21",
+        "entityKey": "0xec5600286122414fa641e6454116d22beb51632d8491d08df5e03e718980c2c6"
+      }
+    }
+  ],
+  "canonical": {
+    "accepted": [
+      "0x4158fce6ab705efbf924c298743b1d300a5d4fb0c5567d137fddca209539b175"
+    ],
+    "rejected": [
+      {
+        "key": "0xec5600286122414fa641e6454116d22beb51632d8491d08df5e03e718980c2c6",
+        "reason": "Duplicate nullifier"
+      }
+    ]
+  },
+  "endBalances": [
+    "9966424553952849108",
+    "9848639999697280"
+  ],
+  "feesGlm": "0.00028272000056544",
+  "verdict": "RISKY",
+  "limit": "No global atomic duplicate admission across independent relayers. Durable guard control prevents uncertainty retry; production implementation remains absent."
+}

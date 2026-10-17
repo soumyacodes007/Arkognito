@@ -1,0 +1,28 @@
+{
+  "started": "2026-10-17T06:31:51.578Z",
+  "checks": [
+    {
+      "domain": "bf01.eu1.hubspotstarter.net",
+      "verified": false,
+      "dkimMs": 1878.8177,
+      "error": "DKIM signature verification failed for domain bf01.eu1.hubspotstarter.net. Reason: bad signature"
+    },
+    {
+      "domain": "starknet.org",
+      "verified": false,
+      "dkimMs": 343.4654999999998,
+      "error": "DKIM signature verification failed for domain starknet.org. Reason: bad signature"
+    }
+  ],
+  "sampleSource": "https://raw.githubusercontent.com/zkemail/zk-email-verify/main/packages/helpers/tests/test-data/multi-dkim-sig.eml",
+  "sampleBytes": 46327,
+  "sampleSha256": "ff84a6f1ba8765cba686ee4eac3e81132ceaf3586b2fdaea321c6234cc616425",
+  "signingDomains": [
+    "bf01.eu1.hubspotstarter.net",
+    "starknet.org"
+  ],
+  "registryError": "Error: HTTP error! status: 500\n    at sg (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s6-zk-email/node_modules/@zk-email/sdk/dist/index-CpetQeNY.mjs:136085:53)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async ac.listBlueprints (file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s6-zk-email/node_modules/@zk-email/sdk/dist/index-CpetQeNY.mjs:142868:11)\n    at async file:///C:/Users/soumy/Desktop/ethglobal/arkiv-veil/spikes/s6-zk-email/run.mjs:16:46",
+  "verdict": "RISKY",
+  "proofTimeMs": null,
+  "blocker": "DKIM verification and registry availability do not establish a matching employment-domain blueprint; no employment proof generated."
+}

@@ -1,0 +1,13 @@
+{
+  "started": "2026-10-17T07:15:24.567Z",
+  "runtime": "v22.23.3",
+  "power": 21,
+  "url": "https://circom.info/powersOfTau28_hez_final_21.ptau",
+  "expectedBlake2b512": "9aef0573cef4ded9c4a75f148709056bf989f80dad96876aadeb6f1c6d062391f07a394a9e756d16f7eb233198d5b69407cca44594c763ab4a5b67ae73254678",
+  "contentLength": "2416002200",
+  "bytes": 2416002200,
+  "downloadAndHashMs": 201640.4724,
+  "actualBlake2b512": "9aef0573cef4ded9c4a75f148709056bf989f80dad96876aadeb6f1c6d062391f07a394a9e756d16f7eb233198d5b69407cca44594c763ab4a5b67ae73254678",
+  "checksumMatches": true,
+  "verdict": "GO for artifact retrieval"
+}

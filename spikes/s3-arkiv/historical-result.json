@@ -1,0 +1,37 @@
+{
+  "started": "2026-10-17T06:34:32.511Z",
+  "reads": [
+    {
+      "requestedBlock": "684298",
+      "returnedBlock": "684298",
+      "ms": 530.2708,
+      "entities": [
+        {
+          "key": "0x1d4d5c3e28cac4626c2c1caf87e6a16b8cb565298c7b279c0c4a34084306b586",
+          "createdAt": "495684",
+          "expiresAt": "684412"
+        }
+      ]
+    },
+    {
+      "requestedBlock": "684554",
+      "returnedBlock": "684554",
+      "ms": 403.5126,
+      "entities": [
+        {
+          "key": "0x1d4d5c3e28cac4626c2c1caf87e6a16b8cb565298c7b279c0c4a34084306b586",
+          "createdAt": "495684",
+          "expiresAt": "684652"
+        }
+      ]
+    }
+  ],
+  "faucet": {
+    "status": 401,
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "head": "684554",
+  "snapshotArgumentsAccepted": true,
+  "stateChangeObserved": true,
+  "limit": "Queries read existing relayer service metadata only. This does not establish a newly written Semaphore group round trip."
+}

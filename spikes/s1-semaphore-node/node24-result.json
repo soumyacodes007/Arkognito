@@ -1,0 +1,79 @@
+{
+  "started": "2026-10-17T06:25:05.007Z",
+  "runtime": "v24.13.1",
+  "downloads": [
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.wasm",
+      "status": 200,
+      "headerBytes": null,
+      "responseMs": 1557.5109
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.zkey",
+      "status": 200,
+      "headerBytes": "1899542",
+      "responseMs": 1517.3794
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.wasm",
+      "status": 200,
+      "headerBytes": null,
+      "responseMs": 109.51550000000043
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.zkey",
+      "status": 200,
+      "headerBytes": "1899542",
+      "responseMs": 82.89109999999982
+    },
+    {
+      "url": "http://127.0.0.1:50541/semaphore-3.wasm",
+      "status": 200,
+      "headerBytes": "1802902",
+      "responseMs": 12.095000000000255
+    },
+    {
+      "url": "http://127.0.0.1:50541/semaphore-3.zkey",
+      "status": 200,
+      "headerBytes": "1899542",
+      "responseMs": 6.899100000000544
+    }
+  ],
+  "cases": {
+    "fake": {
+      "accepted": false
+    },
+    "changedMessage": {
+      "accepted": false
+    },
+    "changedScope": {
+      "accepted": false
+    },
+    "nonMember": {
+      "accepted": false,
+      "error": "The leaf at index '-1' does not exist in this tree"
+    }
+  },
+  "deterministic": true,
+  "proofMs": 3806.4324,
+  "verified": true,
+  "verifyMs": 31.050000000000182,
+  "proofJsonBytes": 962,
+  "groupSize": 5,
+  "depth": 3,
+  "artifacts": {
+    "wasm": {
+      "bytes": 1802902,
+      "sha256": "48e15502f710be0a623d573d472edeeaf918fd5eee0b2ca9b407c4e4f20d12f2",
+      "downloadMs": 222.45010000000002
+    },
+    "zkey": {
+      "bytes": 1899542,
+      "sha256": "c36653c42784df35a01f3d93415af9ad8292a540f8deb134a6a34a01752a89d3",
+      "downloadMs": 282.5515000000005
+    }
+  },
+  "selfHostedProofMs": 567.1773999999996,
+  "selfHostedVerified": true,
+  "verdict": "GO"
+}

@@ -1,0 +1,67 @@
+{
+  "started": "2026-10-17T06:38:33.882Z",
+  "runtime": "v22.23.3",
+  "downloads": [
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.wasm",
+      "status": 200,
+      "headerBytes": null,
+      "responseMs": 845.7855
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-3.zkey",
+      "status": 200,
+      "headerBytes": "1899542",
+      "responseMs": 85.6881000000003
+    },
+    {
+      "url": "http://127.0.0.1:49356/semaphore-3.wasm",
+      "status": 200,
+      "headerBytes": "1802902",
+      "responseMs": 13.549200000000383
+    },
+    {
+      "url": "http://127.0.0.1:49356/semaphore-3.zkey",
+      "status": 200,
+      "headerBytes": "1899542",
+      "responseMs": 6.728399999999965
+    }
+  ],
+  "cases": {
+    "fake": {
+      "accepted": false
+    },
+    "changedMessage": {
+      "accepted": false
+    },
+    "changedScope": {
+      "accepted": false
+    },
+    "nonMember": {
+      "accepted": false,
+      "error": "The leaf at index '-1' does not exist in this tree"
+    }
+  },
+  "deterministic": true,
+  "proofMs": 956.4173999999998,
+  "verified": true,
+  "verifyMs": 22.590999999999894,
+  "proofJsonBytes": 968,
+  "groupSize": 5,
+  "depth": 3,
+  "artifacts": {
+    "wasm": {
+      "bytes": 1802902,
+      "sha256": "48e15502f710be0a623d573d472edeeaf918fd5eee0b2ca9b407c4e4f20d12f2",
+      "downloadMs": 1245.9008000000003
+    },
+    "zkey": {
+      "bytes": 1899542,
+      "sha256": "c36653c42784df35a01f3d93415af9ad8292a540f8deb134a6a34a01752a89d3",
+      "downloadMs": 517.8594000000003
+    }
+  },
+  "selfHostedProofMs": 301.7358000000004,
+  "selfHostedVerified": true,
+  "verdict": "GO"
+}

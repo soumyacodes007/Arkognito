@@ -1,0 +1,62 @@
+{
+  "started": "2026-10-17T06:33:56.745Z",
+  "mode": "Real cryptography; in-memory storage adapter (NOT a live Arkiv round trip)",
+  "cases": [
+    {
+      "name": "one valid, fake proof, duplicate, non-member, edited content",
+      "pass": true
+    },
+    {
+      "name": "redirected owner",
+      "pass": true,
+      "reason": "Owner binding mismatch"
+    },
+    {
+      "name": "changed rootBlock",
+      "pass": true,
+      "reason": "Content hash mismatch"
+    },
+    {
+      "name": "wrong scope",
+      "pass": true,
+      "reason": "Group/scope mismatch"
+    },
+    {
+      "name": "same block deterministic tie break",
+      "pass": true
+    }
+  ],
+  "readMs": 86.86840000000029,
+  "accepted": [
+    "valid"
+  ],
+  "rejected": [
+    {
+      "key": "fake-proof",
+      "reason": "Invalid Semaphore proof"
+    },
+    {
+      "key": "edited-content",
+      "reason": "Content hash mismatch"
+    },
+    {
+      "key": "non-member",
+      "reason": "Historical membership root mismatch"
+    },
+    {
+      "key": "double",
+      "reason": "Duplicate nullifier"
+    }
+  ],
+  "requestedBlocks": [
+    "10",
+    "10",
+    "10",
+    "10",
+    "10",
+    "10"
+  ],
+  "verdict": "RISKY",
+  "localChecksPassed": true,
+  "blocker": "Live malicious-post fixtures, Arkiv historical state and pagination depend on funded S3; storage adapter results do not establish RPC behavior."
+}

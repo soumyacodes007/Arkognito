@@ -1,0 +1,12 @@
+{
+  "name": "s6-zk-email",
+  "scripts": {
+    "start": "node run.mjs"
+  },
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@zk-email/helpers": "6.4.2",
+    "@zk-email/sdk": "2.0.11"
+  }
+}

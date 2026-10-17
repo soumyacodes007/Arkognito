@@ -1,0 +1,43 @@
+{
+  "started": "2026-10-17T07:21:14.166Z",
+  "runtime": "v22.23.3",
+  "compiler": "official native Circom 2.2.3 (publisher SHA-256 checked)",
+  "stages": [
+    {
+      "name": "verify-public-DKIM",
+      "at": "2026-10-17T07:21:14.17Z"
+    },
+    {
+      "name": "compile",
+      "at": "2026-10-17T07:21:15.889Z"
+    }
+  ],
+  "note": "Standalone library circuit, not Registry blueprint. Public upstream sample, local proving only; no email data/proof/public signals sent to Arkiv. Local experimental setup is not a production trusted setup.",
+  "dkimVerified": true,
+  "domain": "icloud.com",
+  "maxHeaderBytes": 576,
+  "maxBodyBytes": 192,
+  "finalizedAt": "2026-10-17T08:03:44.337Z",
+  "verdict": "RISKY",
+  "status": "Incomplete after user-reported restart",
+  "lastObservedStage": "compile",
+  "observedNoCompilerOrDriverAt": "2026-10-17T08:02:31Z",
+  "nativeExitCode": null,
+  "nativeFinalStderr": null,
+  "proofGenerated": false,
+  "proofTimeMs": null,
+  "verified": null,
+  "blocker": "User reported a restart, explaining the session interruption. Saved native result ends at compile; native exit code, final stderr and exact stop time unavailable. No successful corrected witness, ZK proof or verification established. A compiler crash or memory failure is not demonstrated.",
+  "memoryExhaustionDiagnosed": false,
+  "timeboxEnforcement": "Active work stopped when commands stalled around 07:24 UTC; the user later reported a restart. Exact native-process stop time was not captured, so timed shutdown across the interruption cannot be certified.",
+  "initialWitnessFailure": "Error: Assert Failed. Error in template Num2Bits_0 line: 38; Error in template EmailVerifier_239 line: 59",
+  "wasmRetry": "Deliberately stopped after approximately 15 minutes during witness-WASM generation; recorded exit 4294967295 is from operator termination, not evidence of an intrinsic compiler crash.",
+  "nativeCompiler": {
+    "version": "2.2.3",
+    "url": "https://github.com/iden3/circom/releases/download/v2.2.3/circom-windows-amd64.exe",
+    "sha256": "e43f132ee6f0aa79b705beceb59c2a7e6a54d7bdeab917ca34e9fc1951d185e1",
+    "publisherDigestMatched": true
+  },
+  "limits": "No employment extraction, approved domain/key history, recipient/freshness policy, or Semaphore commitment binding implemented. DKIM checking and artifact retrieval do not establish a credential-joining proof.",
+  "interruptionCause": "User-reported restart; device versus application not specified"
+}

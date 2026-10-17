@@ -1,0 +1,131 @@
+{
+  "started": "2026-10-17T06:54:44.941Z",
+  "runtime": "v22.23.3",
+  "requests": [
+    {
+      "url": "https://conductor.zk.email/blueprint?limit=3",
+      "status": 500,
+      "ms": 722.8343
+    },
+    {
+      "url": "https://conductor.zk.email/blueprint/by-slug/Bisht13%2FSuccinctZKResidencyInvite/2",
+      "status": 500,
+      "ms": 638.6904999999999
+    },
+    {
+      "url": "https://raw.githubusercontent.com/zkemail/zk-email-verify/main/packages/helpers/tests/test-data/multi-dkim-sig.eml",
+      "status": 200,
+      "ms": 445.5138000000002
+    },
+    {
+      "url": "https://archive.prove.email/api/key?domain=bf01.eu1.hubspotstarter.net",
+      "status": 200,
+      "ms": 955.8353999999999
+    },
+    {
+      "url": "https://archive.prove.email/api/key?domain=starknet.org",
+      "status": 200,
+      "ms": 419.77179999999953
+    }
+  ],
+  "registry": [
+    {
+      "name": "list",
+      "ok": false,
+      "error": "HTTP error! status: 500",
+      "ms": 723.4819000000001
+    },
+    {
+      "name": "documented-slug",
+      "ok": false,
+      "error": "HTTP error! status: 500",
+      "ms": 639.0287999999998
+    },
+    {
+      "name": "official-dev-example",
+      "ok": false,
+      "error": "fetch failed",
+      "ms": 266.3092999999999
+    }
+  ],
+  "archiveChecks": [
+    {
+      "domain": "bf01.eu1.hubspotstarter.net",
+      "selector": "hs2",
+      "trials": [
+        {
+          "keyIndex": 0,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 33.853399999999965
+        },
+        {
+          "keyIndex": 1,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 18.057200000000194
+        },
+        {
+          "keyIndex": 2,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 16.033399999999347
+        },
+        {
+          "keyIndex": 3,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 21.440600000000813
+        },
+        {
+          "keyIndex": 4,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 15.097200000000157
+        },
+        {
+          "keyIndex": 5,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 19.025400000000445
+        },
+        {
+          "keyIndex": 6,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 14.55409999999938
+        },
+        {
+          "keyIndex": 7,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 8.937200000000303
+        },
+        {
+          "keyIndex": 8,
+          "result": "fail",
+          "comment": "bad signature",
+          "ms": 20.9966000000004
+        },
+        {
+          "keyIndex": 9,
+          "result": "pass",
+          "ms": 12.512499999999818
+        }
+      ],
+      "matchingKeys": 12,
+      "verified": true,
+      "keyIndex": 9
+    },
+    {
+      "domain": "starknet.org",
+      "selector": "hs1-145681388",
+      "trials": [],
+      "matchingKeys": 0
+    }
+  ],
+  "sampleSha256": "ff84a6f1ba8765cba686ee4eac3e81132ceaf3586b2fdaea321c6234cc616425",
+  "verdict": "RISKY",
+  "proofTimeMs": null,
+  "blocker": "No compiled accessible matching blueprint and no ZK Email proof generated; archived-key DKIM checks are signature checks only."
+}

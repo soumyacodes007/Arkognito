@@ -1,0 +1,275 @@
+{
+  "started": "2026-10-17T08:15:18.233Z",
+  "runtime": "v22.23.3",
+  "mode": "Local failure/race controls with real Semaphore proofs; no RPC or chain writes",
+  "checks": [
+    {
+      "name": "malformed null returns 400",
+      "pass": true,
+      "details": {
+        "status": 400,
+        "body": {
+          "error": "entity, content and proof objects required"
+        }
+      }
+    },
+    {
+      "name": "malformed [] returns 400",
+      "pass": true,
+      "details": {
+        "status": 400,
+        "body": {
+          "error": "entity, content and proof objects required"
+        }
+      }
+    },
+    {
+      "name": "malformed {} returns 400",
+      "pass": true,
+      "details": {
+        "status": 400,
+        "body": {
+          "error": "entity, content and proof objects required"
+        }
+      }
+    },
+    {
+      "name": "malformed {\"entity\":null,\"proof\":{}} returns 400",
+      "pass": true,
+      "details": {
+        "status": 400,
+        "body": {
+          "error": "entity, content and proof objects required"
+        }
+      }
+    },
+    {
+      "name": "malformed not json returns 400",
+      "pass": true,
+      "details": {
+        "status": 400,
+        "body": {
+          "error": "Unexpected token 'o', \"not json\" is not valid JSON"
+        }
+      }
+    },
+    {
+      "name": "changed content rejected",
+      "pass": true
+    },
+    {
+      "name": "redirected owner rejected",
+      "pass": true
+    },
+    {
+      "name": "server remains alive and accepts real proof",
+      "pass": true,
+      "details": {
+        "status": 201,
+        "body": {
+          "syntheticLocal": true
+        }
+      }
+    },
+    {
+      "name": "malformed requests never called writer",
+      "pass": true,
+      "details": {
+        "calls": 1
+      }
+    },
+    {
+      "name": "invalid earlier proof does not preempt valid admission",
+      "pass": true,
+      "details": {
+        "status": 201,
+        "body": {
+          "syntheticLocal": true
+        }
+      }
+    },
+    {
+      "name": "valid existing proof still prevents replay",
+      "pass": true,
+      "details": {
+        "status": 409,
+        "body": {
+          "error": "Valid nullifier already published"
+        }
+      }
+    },
+    {
+      "name": "historical provider failure returns 503 and no write",
+      "pass": true,
+      "details": {
+        "status": 503,
+        "body": {
+          "error": "getGroupAt: Injected historical RPC unavailable"
+        }
+      }
+    },
+    {
+      "name": "reader throws typed unavailable",
+      "pass": true,
+      "details": {
+        "error": "getGroupAt: Injected historical RPC unavailable"
+      }
+    },
+    {
+      "name": "updated reader accepts one valid and rejects four adversarial cases",
+      "pass": true,
+      "details": {
+        "accepted": [
+          "0xff"
+        ],
+        "rejected": [
+          {
+            "key": "fake",
+            "reason": "Invalid Semaphore proof"
+          },
+          {
+            "key": "outsider",
+            "reason": "Historical membership root mismatch"
+          },
+          {
+            "key": "edited",
+            "reason": "Content hash mismatch"
+          },
+          {
+            "key": "0x00",
+            "reason": "Duplicate nullifier"
+          }
+        ]
+      }
+    },
+    {
+      "name": "receipt log order beats reversed lexical keys",
+      "pass": true,
+      "details": [
+        {
+          "key": "0xff",
+          "nullifier": "16472640177154811208098638091235340464873516904217752898103489226153812990662",
+          "live": true
+        }
+      ]
+    },
+    {
+      "name": "deletion does not promote duplicate",
+      "pass": true,
+      "details": {
+        "accepted": [],
+        "rejected": [
+          {
+            "key": "0x00",
+            "reason": "Duplicate nullifier"
+          }
+        ],
+        "spent": [
+          {
+            "key": "0xff",
+            "nullifier": "16472640177154811208098638091235340464873516904217752898103489226153812990662",
+            "live": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "partial history fails closed",
+      "pass": true,
+      "details": {
+        "error": "Complete publication history required"
+      }
+    },
+    {
+      "name": "child actually exited in injected crash",
+      "pass": true,
+      "details": {
+        "pid": 29408,
+        "exitCode": 77,
+        "requestError": "fetch failed"
+      }
+    },
+    {
+      "name": "fresh process blocks pending admission after crash",
+      "pass": true,
+      "details": {
+        "pid": 16024,
+        "status": 503,
+        "body": {
+          "error": "Pending admission requires reconciliation"
+        },
+        "calls": 1
+      }
+    },
+    {
+      "name": "two processes sharing coordinator call writer once",
+      "pass": true,
+      "details": {
+        "pids": [
+          29164,
+          27608
+        ],
+        "responses": [
+          {
+            "status": 409,
+            "body": {
+              "error": "Nullifier already confirmed"
+            }
+          },
+          {
+            "status": 201,
+            "body": {
+              "syntheticLocal": true,
+              "entityKey": "local-16472640177154811208098638091235340464873516904217752898103489226153812990662"
+            }
+          }
+        ],
+        "calls": 1
+      }
+    },
+    {
+      "name": "corrupt journal blocks writer",
+      "pass": true,
+      "details": {
+        "status": 503,
+        "body": {
+          "error": "Admission journal corrupt; reconciliation required"
+        }
+      }
+    },
+    {
+      "name": "stale lock fails closed without automatic stealing",
+      "pass": true,
+      "details": {
+        "status": 503,
+        "body": {
+          "error": "Admission coordinator locked; reconcile before resuming"
+        }
+      }
+    },
+    {
+      "name": "known hash survives confirmation checkpoint failure",
+      "pass": true,
+      "details": {
+        "status": 503,
+        "body": {
+          "error": "Injected confirmation persistence failure",
+          "txHash": "0xabababababababababababababababababababababababababababababababab",
+          "entityKey": "local-confirmed",
+          "detail": "Pending admission retained; no automatic resend"
+        }
+      }
+    },
+    {
+      "name": "checkpoint failure never automatically resends",
+      "pass": true,
+      "details": {
+        "status": 503,
+        "body": {
+          "error": "Pending admission requires reconciliation"
+        }
+      }
+    }
+  ],
+  "verdict": "GO for these isolated mitigation controls"
+}

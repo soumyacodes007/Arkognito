@@ -1,0 +1,83 @@
+{
+  "started": "2026-10-17T08:19:01.046Z",
+  "runtime": "v22.23.3",
+  "project": "veil-hardening-expiry-1792225141048",
+  "checks": [
+    {
+      "name": "both records recoverable at creation snapshot",
+      "pass": true
+    },
+    {
+      "name": "native logs order canonical before duplicate",
+      "pass": true
+    },
+    {
+      "name": "expired canonical absent while duplicate remains live",
+      "pass": true
+    },
+    {
+      "name": "expiry does not promote duplicate or release nullifier",
+      "pass": true,
+      "details": {
+        "accepted": [],
+        "spent": [
+          {
+            "key": "0x53ad0cf2875ffcc7982b21e50555a3745356728578a1c864f8001aec71d66197",
+            "nullifier": "17280939863097406389910422257590697707639154151727680750682048979697789175486",
+            "live": false
+          }
+        ],
+        "rejected": [
+          {
+            "key": "0x71abe920260618fb9b27f15897457056a42b7d0a12d9ea8701d2f0a1a53f268f",
+            "reason": "Duplicate nullifier"
+          }
+        ]
+      }
+    },
+    {
+      "name": "expiry receipt fees reconcile",
+      "pass": true
+    }
+  ],
+  "receipts": [
+    {
+      "hash": "0x8a5c26abf4ebc9f8b4122e131835eca3e4561b3f8b66fdbf8cafd5860342b170",
+      "label": "group",
+      "block": "687691",
+      "gasCostWei": "392624000785248"
+    },
+    {
+      "hash": "0xdc82ae03b67f88db25365e0b7123999407a8b29976f2208ca5e1de591278565e",
+      "label": "expiring-canonical-and-duplicate",
+      "block": "687694",
+      "gasCostWei": "263360000526720"
+    }
+  ],
+  "startBalance": "9965358971950717944",
+  "creationBlock": "687694",
+  "expiresAt": "687697",
+  "afterExpiryHead": "687697",
+  "liveKeys": [
+    "0x71abe920260618fb9b27f15897457056a42b7d0a12d9ea8701d2f0a1a53f268f"
+  ],
+  "read": {
+    "accepted": [],
+    "spent": [
+      {
+        "key": "0x53ad0cf2875ffcc7982b21e50555a3745356728578a1c864f8001aec71d66197",
+        "nullifier": "17280939863097406389910422257590697707639154151727680750682048979697789175486",
+        "live": false
+      }
+    ],
+    "rejected": [
+      {
+        "key": "0x71abe920260618fb9b27f15897457056a42b7d0a12d9ea8701d2f0a1a53f268f",
+        "reason": "Duplicate nullifier"
+      }
+    ]
+  },
+  "endBalance": "9964702987949405976",
+  "feesGlm": "0.000655984001311968",
+  "verdict": "GO for retained-history expiry control"
+}

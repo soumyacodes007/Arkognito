@@ -1,0 +1,31 @@
+{
+  "started": "2026-10-17T06:31:51.910Z",
+  "runtime": "v24.13.1",
+  "stages": [],
+  "downloads": [
+    {
+      "url": "https://raw.githubusercontent.com/anon-aadhaar/anon-aadhaar/main/packages/circuits/assets/test.json",
+      "status": 200,
+      "contentLength": "2050",
+      "responseMs": 245.25209999999998
+    },
+    {
+      "url": "https://raw.githubusercontent.com/anon-aadhaar/anon-aadhaar/main/packages/circuits/assets/testCertificate.pem",
+      "status": 200,
+      "contentLength": "1052",
+      "responseMs": 591.6724
+    }
+  ],
+  "exportedFunctions": [
+    "ArtifactsOrigin",
+    "ProverState",
+    "artifactUrls",
+    "generateArgs",
+    "init",
+    "prove",
+    "testPublicKeyHash",
+    "verify"
+  ],
+  "verdict": "RISKY",
+  "error": "Error: invalid BigNumber string (argument=\"value\", value=\"synthetic-veil-join\", code=INVALID_ARGUMENT, version=bignumber/5.7.0)\n    at _Logger.makeError (C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:22343:19)\n    at _Logger.throwError (C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:22352:16)\n    at _Logger.throwArgumentError (C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:22355:17)\n    at _BigNumber.from (C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:22805:22)\n    at hash (C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:22902:23)\n    at C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:22954:31\n    at Generator.next (<anonymous>)\n    at C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:49:61\n    at new Promise (<anonymous>)\n    at __async (C:\\Users\\soumy\\Desktop\\ethglobal\\arkiv-veil\\spikes\\s7-anon-aadhaar\\node_modules\\@anon-aadhaar\\core\\dist\\index.js:33:10)"
+}

@@ -1,0 +1,102 @@
+{
+  "started": "2026-10-17T06:32:11.033Z",
+  "runtime": "v24.13.1",
+  "stages": [
+    {
+      "state": "fetching-wasm",
+      "elapsedMs": 0.5814000000000306
+    },
+    {
+      "state": "fetching-zkey",
+      "elapsedMs": 22499.078
+    },
+    {
+      "state": "proving",
+      "elapsedMs": 143982.2234
+    },
+    {
+      "state": "completed",
+      "elapsedMs": 183296.8693
+    }
+  ],
+  "downloads": [
+    {
+      "url": "https://raw.githubusercontent.com/anon-aadhaar/anon-aadhaar/main/packages/circuits/assets/test.json",
+      "status": 200,
+      "contentLength": "2050",
+      "responseMs": 311.0313
+    },
+    {
+      "url": "https://raw.githubusercontent.com/anon-aadhaar/anon-aadhaar/main/packages/circuits/assets/testCertificate.pem",
+      "status": 200,
+      "contentLength": "1052",
+      "responseMs": 54.12639999999999
+    },
+    {
+      "url": "https://anon-aadhaar-artifacts.s3.eu-central-1.amazonaws.com/v2.0.0/aadhaar-verifier.wasm",
+      "status": 200,
+      "contentLength": "10469686",
+      "responseMs": 1583.2810000000002
+    },
+    {
+      "url": "https://anon-aadhaar-artifacts.s3.eu-central-1.amazonaws.com/v2.0.0/circuit_final.zkey",
+      "status": 200,
+      "contentLength": "612082146",
+      "responseMs": 1120.8251000000018
+    },
+    {
+      "url": "https://anon-aadhaar-artifacts.s3.eu-central-1.amazonaws.com/v2.0.0/vkey.json",
+      "status": 200,
+      "contentLength": "4388",
+      "responseMs": 840.4363000000012
+    }
+  ],
+  "exportedFunctions": [
+    "ArtifactsOrigin",
+    "ProverState",
+    "artifactUrls",
+    "generateArgs",
+    "init",
+    "prove",
+    "testPublicKeyHash",
+    "verify"
+  ],
+  "argsMs": 15.18380000000002,
+  "revealFlags": [
+    {
+      "field": "revealAgeAbove18",
+      "value": "0"
+    },
+    {
+      "field": "revealGender",
+      "value": "0"
+    },
+    {
+      "field": "revealPinCode",
+      "value": "0"
+    },
+    {
+      "field": "revealState",
+      "value": "0"
+    }
+  ],
+  "proofMs": 183300.437,
+  "verified": true,
+  "verifyMs": 870.0905999999959,
+  "proofJsonBytes": 2038,
+  "testPubkeyMatches": true,
+  "publicSignalNames": [
+    "pubkeyHash",
+    "timestamp",
+    "nullifierSeed",
+    "nullifier",
+    "signalHash",
+    "ageAbove18",
+    "gender",
+    "pincode",
+    "state"
+  ],
+  "productionRejected": true,
+  "productionError": "VerificationError: public key mismatch.",
+  "verdict": "GO"
+}

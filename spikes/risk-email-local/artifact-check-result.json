@@ -1,0 +1,32 @@
+{
+  "started": "2026-10-17T07:14:56.737Z",
+  "sources": [
+    {
+      "name": "installed snarkjs 0.7.6 README",
+      "urls": [
+        "https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau"
+      ]
+    },
+    {
+      "name": "current official snarkjs README",
+      "urls": [
+        "https://circom.info/powersOfTau28_hez_final_21.ptau"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "url": "https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau",
+      "status": 403,
+      "contentLength": "395",
+      "contentRange": null,
+      "error": "<?xml version='1.0' encoding='UTF-8'?><Error><Code>AccessDenied</Code><Message>Access denied.</Message><Details>Anonymous caller does not have storage.objects.get access to the Google Cloud Storage object. Permission 'storage.objects.get' denied on resource '//storage.googleapis.com/projects/_/buckets/zkevm/objects/ptau/powersOfTau28_hez_final_21.ptau' (or it may not exist).</Details></Error>"
+    },
+    {
+      "url": "https://circom.info/powersOfTau28_hez_final_21.ptau",
+      "status": 206,
+      "contentLength": "32",
+      "contentRange": "bytes 0-31/2416002200"
+    }
+  ]
+}

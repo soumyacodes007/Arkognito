@@ -1,0 +1,223 @@
+{
+  "started": "2026-10-17T06:57:21.198Z",
+  "runtime": "v22.23.3",
+  "project": "veil-risk-1792220241199",
+  "receipts": [
+    {
+      "label": "members-0",
+      "hash": "0x4c647f3a77f3d60a50b0204f8a54cd6097014737d9d62d4c9aa392e1dbc337ca",
+      "block": "685251",
+      "gasCostWei": "5018032010036064"
+    },
+    {
+      "label": "members-50",
+      "hash": "0x133845c3babe7eb04365f42b5477eac7227628802c6eb5b0d952343ebd33534f",
+      "block": "685255",
+      "gasCostWei": "5027200010054400"
+    },
+    {
+      "label": "members-100",
+      "hash": "0xf36cca4fdf667abf3305298ec36905924b57f7deacfd83407ad1bc032c67aa2a",
+      "block": "685259",
+      "gasCostWei": "5027200010054400"
+    },
+    {
+      "label": "members-150",
+      "hash": "0x8ff15ad447090500ebae037cd84a7afc9cb5bed0647c04131bec7c980a0ce2cf",
+      "block": "685262",
+      "gasCostWei": "5027200010054400"
+    },
+    {
+      "label": "members-200",
+      "hash": "0x0fe656bcee791d098ac1852278f33753ea69a440e05e5b94dc4fb00715dcaf1c",
+      "block": "685265",
+      "gasCostWei": "603264001206528"
+    },
+    {
+      "label": "late-member",
+      "hash": "0x2a6d42acb5ff78780dac9fc040ea13922ccd436de7b1e0386235f02a30b94504",
+      "block": "685269",
+      "gasCostWei": "100544000201088"
+    },
+    {
+      "label": "same-block-dupes",
+      "hash": "0x0c0d2877bdbd849269477a85be94e745d0ffeb87ca5c7546a1dc451cf12da9f2",
+      "block": "685275",
+      "gasCostWei": "262976000525952"
+    },
+    {
+      "label": "delete-canonical",
+      "hash": "0xef88cdb77af294a31e38b8bccdafc4200f0582095256dc3c456c7995584863fd",
+      "block": "685283",
+      "gasCostWei": "24510000049020"
+    },
+    {
+      "label": "invalid-preemption",
+      "hash": "0x50c54bd0554cea81f233f211347987824b5a97463d4c2636627ea15779810431",
+      "block": "685287",
+      "gasCostWei": "121984000243968"
+    },
+    {
+      "label": "lost-response-committed",
+      "hash": "0xd672f8f4fcaa1f8292ca6cc89c622bd1d7af120050e0f66289471a921351921b",
+      "block": "685296",
+      "gasCostWei": "131616000263232"
+    },
+    {
+      "label": "short-expiry",
+      "hash": "0xa6a054e451cd5c77daf6e854b983dec539fada24be852f5dc992b3c05031b016",
+      "block": "685306",
+      "gasCostWei": "90544000181088"
+    }
+  ],
+  "checks": [
+    {
+      "name": "pagination 200+5 with intervening write",
+      "pass": true
+    },
+    {
+      "name": "paginated root matches ordered initial commitments",
+      "pass": true
+    },
+    {
+      "name": "same-block canonical key order",
+      "pass": true
+    },
+    {
+      "name": "fresh server rejects confirmed chain replay",
+      "pass": true
+    },
+    {
+      "name": "restart after lost confirmed write response",
+      "pass": true
+    },
+    {
+      "name": "expiry does not erase historical data",
+      "pass": true
+    }
+  ],
+  "findings": [
+    {
+      "severity": "design",
+      "name": "Earliest-wins depends on retained history",
+      "evidence": "Deleting the readonly canonical post promoted its duplicate in current-state reads."
+    },
+    {
+      "severity": "high",
+      "name": "Research relayer accepts invalid nullifier preemption",
+      "evidence": "Nullifier already written (candidate must be checked by readers)"
+    },
+    {
+      "severity": "high",
+      "name": "Uncertain reservations lost on restart",
+      "evidence": "Fresh processes both admitted the same nullifier to the write callback after a simulated uncertain outcome."
+    }
+  ],
+  "startBalanceWei": "9998404943996809888",
+  "groupKey": "0xb3abc738aa06c1c20d72aa98a4799fe27fa46b8f616419113c7b4b3446ce2416",
+  "rootBlock": "685265",
+  "pagination": {
+    "first": 200,
+    "second": 5,
+    "hasMore": false,
+    "snapshot": "685265",
+    "returnedBlocks": [
+      "685265",
+      "685265"
+    ],
+    "currentCount": 206,
+    "ms": 10141.467100000009
+  },
+  "tie": {
+    "block": "685275",
+    "createOrder": [
+      "0x2387d44ea8e5a22b82a5f6ebbbac0005b4786e78165d8604ca3e8709b5cc1d43",
+      "0x076c49cd0384f0e778b08e6d6389f8e4d1d82691fa954f5922f430446bb3ea9f"
+    ],
+    "expectedCanonical": "0x076c49cd0384f0e778b08e6d6389f8e4d1d82691fa954f5922f430446bb3ea9f",
+    "accepted": [
+      "0x076c49cd0384f0e778b08e6d6389f8e4d1d82691fa954f5922f430446bb3ea9f"
+    ],
+    "rejected": [
+      {
+        "key": "0x2387d44ea8e5a22b82a5f6ebbbac0005b4786e78165d8604ca3e8709b5cc1d43",
+        "reason": "Duplicate nullifier"
+      }
+    ]
+  },
+  "restart": {
+    "status": 409,
+    "body": {
+      "error": "Nullifier already written (candidate must be checked by readers)"
+    },
+    "ms": 3460.646900000007
+  },
+  "deletion": {
+    "accepted": [
+      "0x2387d44ea8e5a22b82a5f6ebbbac0005b4786e78165d8604ca3e8709b5cc1d43"
+    ],
+    "priorCanonical": "0x076c49cd0384f0e778b08e6d6389f8e4d1d82691fa954f5922f430446bb3ea9f",
+    "otherCopyPromoted": true
+  },
+  "poisoning": {
+    "status": 409,
+    "body": {
+      "error": "Nullifier already written (candidate must be checked by readers)"
+    },
+    "ms": 3452.6322999999975,
+    "writeCalls": 0,
+    "invalidProofRejectedByReader": true
+  },
+  "lostResponse": {
+    "first": {
+      "status": 503,
+      "body": {
+        "error": "Simulated response lost after confirmed chain write",
+        "txHash": "0xd672f8f4fcaa1f8292ca6cc89c622bd1d7af120050e0f66289471a921351921b",
+        "detail": "Write outcome requires reconciliation; reservation retained, no automatic resend"
+      },
+      "ms": 11530.184699999998
+    },
+    "restarted": {
+      "status": 409,
+      "body": {
+        "error": "Nullifier already written (candidate must be checked by readers)"
+      },
+      "ms": 3314.9793000000063
+    },
+    "txHash": "0xd672f8f4fcaa1f8292ca6cc89c622bd1d7af120050e0f66289471a921351921b"
+  },
+  "uncertainRestart": {
+    "first": 503,
+    "afterRestart": 503,
+    "attempts": 2,
+    "mode": "failure injection: no transaction submitted"
+  },
+  "expiry": {
+    "entityKey": "0x05693f38a21c8c1d60cb0852dff463b4689e0e3fc76f35feee92f2f2b3b20357",
+    "creationBlock": "685306",
+    "expiresAt": "685309",
+    "liveCount": 0,
+    "historicalCount": 1
+  },
+  "archive": [
+    {
+      "block": "495684",
+      "returnedBlock": "495684",
+      "matches": 2,
+      "keys": [
+        "0x1d4d5c3e28cac4626c2c1caf87e6a16b8cb565298c7b279c0c4a34084306b586",
+        "0x8fdeb44e3d18d35939251bcdd91d8c85c543f9458fcad8de80f690edcb074e36"
+      ]
+    },
+    {
+      "block": "352358",
+      "returnedBlock": "352358",
+      "matches": 0,
+      "keys": []
+    }
+  ],
+  "balanceAfterWei": "9976969873953939748",
+  "gasCostGlm": "0.02143507004287014",
+  "verdict": "RISKY"
+}

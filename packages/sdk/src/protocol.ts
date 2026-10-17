@@ -75,6 +75,8 @@ export type InfoResponse = {
   ohttpKey?: string
   /** Batches smaller than this are filled with cover records (B5), for encrypted records. */
   coverMinBatch?: number
+  /** This relayer is also a key-keeper for sealed records (seal.ts): it holds shares while records live. */
+  keeper?: boolean
 }
 
 export type IssueRequest = {
@@ -91,5 +93,28 @@ export type IssueRequest = {
 }
 
 export type IssueResponse = { blindSignatures: string[]; remaining: number }
+
+// ---- key-keepers (seal.ts) -----------------------------------------------------------------------
+
+/** POST /v1/keeper/deposit: hand a share to a keeper before the record is written. */
+export type KeeperDeposit = { sealId: Hex; share: Hex; readers: "owner" | "anyone" }
+
+/** POST /v1/keeper/bind: tie a deposited share to the record that carries its sealId. */
+export type KeeperBind = { entityKey: Hex }
+
+/** Signed by the record's owner (an ownership proof, verifier "arkognito-keeper"). */
+export type KeeperProof = { entityKey: Hex; owner: Address; challenge: string; verifier: string; expiresAt: number; chainId: number; signature: Hex }
+
+/** POST /v1/keeper/release: the share, encrypted to `requesterKey` (X25519). Owner-only records need `proof` with challenge "release:" + requesterKey. */
+export type KeeperRelease = { entityKey: Hex; requesterKey: Hex; proof?: KeeperProof }
+export type KeeperReleaseResponse = { epk: Hex; box: Hex }
+
+/** POST /v1/keeper/destroy: delete the share now. `proof` challenge "destroy". */
+export type KeeperDestroy = { entityKey: Hex; proof: KeeperProof }
+
+/** POST /v1/extend: extend a sealed record's lifetime (anyone may; a token pays when tokens are on). */
+export type ExtendRequest = { app: string; entityKey: Hex; expSeconds: number; token?: TokenRedemption }
+
+export const KEEPER_VERIFIER = "arkognito-keeper"
 
 export const API_VERSION = "arkognito-relayer/1"

@@ -1,0 +1,88 @@
+{
+  "started": "2026-10-17T06:55:44.147Z",
+  "runtime": "v22.23.3",
+  "runs": [
+    {
+      "depth": 8,
+      "members": 256,
+      "groupBuildMs": 204.86290000000008,
+      "actualDepth": 8,
+      "coldProofMs": 3163.5536,
+      "verified": true,
+      "verifyMs": 24.410800000000563,
+      "proofJsonBytes": 900,
+      "cachedProofMs": 466.47760000000017,
+      "cachedVerified": true,
+      "rssBytes": 515436544,
+      "maxRssKB": 503364
+    },
+    {
+      "depth": 12,
+      "members": 4096,
+      "groupBuildMs": 3400.8481,
+      "actualDepth": 12,
+      "coldProofMs": 1941.6313999999993,
+      "verified": true,
+      "verifyMs": 115.16020000000026,
+      "proofJsonBytes": 902,
+      "cachedProofMs": 581.1841000000004,
+      "cachedVerified": true,
+      "rssBytes": 381001728,
+      "maxRssKB": 519612
+    },
+    {
+      "depth": 16,
+      "members": 65536,
+      "groupBuildMs": 51980.2555,
+      "actualDepth": 16,
+      "coldProofMs": 1698.0791000000027,
+      "verified": true,
+      "verifyMs": 21.339200000002165,
+      "proofJsonBytes": 903,
+      "cachedProofMs": 552.4576000000015,
+      "cachedVerified": true,
+      "rssBytes": 439345152,
+      "maxRssKB": 519612
+    }
+  ],
+  "downloads": [
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-8.wasm",
+      "status": 200,
+      "contentLength": null,
+      "ms": 1046.6751000000002
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-8.zkey",
+      "status": 200,
+      "contentLength": "2231251",
+      "ms": 1042.9113000000002
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-12.zkey",
+      "status": 200,
+      "contentLength": "2922502",
+      "ms": 764.474799999999
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-12.wasm",
+      "status": 200,
+      "contentLength": null,
+      "ms": 916.7700000000004
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-16.wasm",
+      "status": 200,
+      "contentLength": null,
+      "ms": 810.8651000000027
+    },
+    {
+      "url": "https://snark-artifacts.pse.dev/semaphore/4.13.0/semaphore-16.zkey",
+      "status": 200,
+      "contentLength": "3408199",
+      "ms": 897.1186999999991
+    }
+  ],
+  "note": "One real signer plus random field commitments for non-signing leaves; measures tree/proof scaling, not identity enrollment throughput.",
+  "verdict": "GO"
+}
