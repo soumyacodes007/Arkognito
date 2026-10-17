@@ -4,6 +4,10 @@ Privacy infrastructure for user-owned records on [Arkiv](https://arkiv.network).
 The published TypeScript package is [**`arkognito@0.1.0`**](https://www.npmjs.com/package/arkognito/v/0.1.0);
 anonymous group permissions use **`arkognito/semaphore`**.
 
+[Quickstart](#write-find-and-prove-a-record) · [Architecture](#architecture) ·
+[Semaphore](#anonymous-group-permissions-with-semaphore) · [Run locally](#run-the-services-and-demo) ·
+[Test evidence](#tests-and-measured-evidence) · [Protocol](spec/SPEC.md)
+
 Veil writes through shared relayers and gives each record a fresh owner address. Users can recover
 records and prove ownership without publishing their main-wallet-to-record mapping. Optional
 Semaphore proofs let approved group members submit without identifying which member submitted.
@@ -21,6 +25,28 @@ Semaphore proofs let approved group members submit without identifying which mem
 Your application decides who joins. Semaphore proves membership, not citizenship, unique personhood
 or the truth of a report. Anon Aadhaar is an optional future admission integration; only its separate
 synthetic test proof was exercised. A combined credential adapter is not included. ZK Email is deferred.
+
+## Architecture
+
+Veil separates the user's private vault, shared transaction sender and public record owner. Arkiv
+stores the records; it does not execute the Semaphore verifier.
+
+```mermaid
+flowchart LR
+    App["Your app + private vault<br/>Derive, encrypt and prove"]
+    Relay["Shared relayer<br/>Validate and pay gas"]
+    Records["Public Arkiv record<br/>Creator: relayer<br/>Owner: fresh address"]
+    Reader["Independent reader<br/>Verify proofs off-chain"]
+    App -->|"Signed request"| Relay
+    Relay -->|"Atomic create + transfer"| Records
+    Records --> Reader
+```
+
+The relayer sees the requested owner, envelope and timing; encryption hides the encrypted payload
+from it. Root keys and recovery codes stay on the device. Public attributes, proofs and transaction
+history remain visible. Optional OHTTP adds a separate network relay; it is not enabled by this
+diagram or by default. See [architecture and trust boundaries](docs/architecture.md) for the write,
+verification and credential-admission flows.
 
 ## Install
 
@@ -119,6 +145,16 @@ const { accepted, rejected, spent } = await feed.readPosts()
 The earliest valid nullifier wins in block, transaction and log order. Deleted/expired winners
 remain spent. Verification grants no ciphertext decryption. Arkiv has no application smart
 contracts: relayers and readers verify proofs off-chain.
+
+```mermaid
+flowchart TD
+    Start["Read trusted publication history<br/>and group state at rootBlock"] --> Verify["Check publication, signature and proof<br/>Bind scope, owner and content"]
+    Start -->|"History unavailable"| Unavailable["Throw VerificationUnavailable"]
+    Verify -->|"Invalid"| Reject["Reject record"]
+    Verify -->|"Valid"| Order["Earliest valid nullifier wins<br/>by block, transaction and log"]
+    Order --> Spent["Retain spent status after expiry or deletion<br/>Reject later duplicates"]
+    Spent --> Live["Return live winners as accepted"]
+```
 
 Read [the complete Semaphore guide](docs/semaphore.md) for administration, admission, artifact
 hosting, relayer configuration, historical verification and recovery.
@@ -226,8 +262,10 @@ can use the recorded live evidence without repeating funded transactions.
 | `spec/SPEC.md` | Protocol and wire format for independent implementations |
 | `arkiv/schema.md` | Entities, typed attributes, lifetimes and queries |
 | `arkiv/friction.md` | Reproducible Arkiv integration feedback |
+| `docs/architecture.md` | Mermaid flows, public/private data and trust boundaries |
 | `docs/semaphore.md` | Group authorization and independent reader guide |
 | `docs/semaphore-validation.md` | Recorded tests, measurements and remaining limits |
+| `docs/release-0.1.0.md` | Published package checks and registry verification |
 | `spikes`, `tests` | Isolated feasibility experiments and test suites |
 
 The [documentation site source](https://github.com/soumyacodes007/docs) includes SDK/API references,
