@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# Synthetic recovery codes, relayer journals and run results: never committed.
+.state/
+.env

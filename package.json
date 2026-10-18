@@ -38,7 +38,8 @@
     "test:passkey": "tsx --conditions=arkognito-source tests/browser-passkey.ts",
     "demo:crowd": "tsx --conditions=arkognito-source scripts/demo-crowd.ts",
     "ohttp-relay": "tsx --conditions=arkognito-source packages/relayer/src/start.ts ohttp-relay",
-    "setup": "tsx --conditions=arkognito-source scripts/setup.ts"
+    "setup": "tsx --conditions=arkognito-source scripts/setup.ts",
+    "dev:campus": "npm run dev -w campus-voice"
   },
   "license": "MIT"
 }

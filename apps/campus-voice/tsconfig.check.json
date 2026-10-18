@@ -1,0 +1,9 @@
+{
+  // Typecheck only (\`npm run typecheck -w campus-voice\`). Not named tsconfig.json on purpose: tsx reads
+  // tsconfig.json at runtime, and this file maps @anon-aadhaar/core to a declaration for the checker.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": { "@anon-aadhaar/core": ["./server/anon-aadhaar.d.ts"] }
+  },
+  "include": ["server", "vite.config.ts"]
+}

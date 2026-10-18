@@ -1,0 +1,35 @@
+{
+  "name": "campus-voice",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Campus Voice: students report professors without being identified, and still count. A story demo of Arkognito with Semaphore on Arkiv (synthetic data, Tiramisu testnet).",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "server": "tsx --conditions=arkognito-source server/serve.ts",
+    "web": "vite",
+    "flow": "tsx --conditions=arkognito-source server/try-flow.ts",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "aadhaar": "tsx --conditions=arkognito-source server/try-aadhaar.ts"
+  },
+  "dependencies": {
+    "@anon-aadhaar/core": "2.4.3",
+    "@arkiv-network/sdk": "0.8.1",
+    "@semaphore-protocol/proof": "4.14.4",
+    "arkognito": "0.1.0",
+    "buffer": "6.0.3",
+    "jsqr": "1.4.0",
+    "lucide-react": "0.460.0",
+    "qrcode": "1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "viem": "2.57.4",
+    "zxing-wasm": "3.1.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.0.3",
+    "vite": "8.3.4"
+  }
+}

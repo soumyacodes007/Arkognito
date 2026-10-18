@@ -1,0 +1,278 @@
+/* The few pieces the story needs beyond the dashboard's CSS, built from the same tokens. */
+
+.eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+.ph .lede {
+  max-width: 640px;
+  line-height: 1.55;
+}
+
+/* chapter numbers in the sidebar, the size of an icon */
+.chap-n {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-3);
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+.sitem.on .chap-n {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* who knows what */
+.who {
+  align-items: flex-start;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.who-ic {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-3);
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.who-ic.ok {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.who-n {
+  font-weight: 500;
+}
+.who-k {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.45;
+  margin-top: 1px;
+}
+
+/* the recovery code, big enough to read on video */
+.code-big {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* what is stored on Arkiv */
+.stored {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-3);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.dd-note {
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  margin-top: 4px;
+}
+dl.props dd .badge .i {
+  margin-right: 2px;
+}
+
+/* the committee's count */
+.bigstat {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.bigstat .v {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.bigstat .k {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-top: 4px;
+}
+.rep {
+  align-items: flex-start;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.rep-t {
+  line-height: 1.45;
+  margin-bottom: 2px;
+}
+
+@media (max-width: 900px) {
+  .bigstat {
+    gap: 18px;
+  }
+}
+
+/* the synthetic Anon Aadhaar test card */
+.aadhaar-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+.ac-band {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+.ac-body {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.ac-qr {
+  width: 300px;
+  height: 300px;
+  max-width: 100%;
+  border-radius: var(--r);
+  background: #fff;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.ac-side {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.ac-side p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.ac-t {
+  font-weight: 600;
+}
+
+/* scanning */
+.scan-view {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 16 / 9;
+  max-height: 340px;
+}
+.scan-view video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scan-view.off {
+  opacity: 0.5;
+}
+.scan-frame {
+  position: absolute;
+  inset: 12% 28%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+}
+.scan-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  text-align: center;
+  color: #fff;
+  font-size: var(--fs-xs);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.drop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.drop:hover {
+  background: var(--surface-2);
+}
+.drop input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.drop.off {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* what the union learned, and what it never saw */
+.learned {
+  padding: 12px 14px;
+}
+.learned .lh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-2);
+}
+.learned .lh.ok {
+  color: var(--green);
+}
+.learned ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* chapter 7: the collapsed "lost your phone?" section */
+.lost-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.lost-h:hover {
+  color: var(--text);
+}
+.lost-h .chev {
+  transition: transform var(--dur);
+}
+.lost-h .chev.open {
+  transform: rotate(180deg);
+}
