@@ -8,3 +8,7 @@ apps/demo/src
 apps/demo/*.html
 tests
 spike
+**/.env
+**/.state
+output
+.codex-build

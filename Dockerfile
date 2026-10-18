@@ -8,6 +8,7 @@ COPY package.json package-lock.json tsconfig.json ./
 COPY packages/sdk/package.json packages/sdk/
 COPY packages/relayer/package.json packages/relayer/
 COPY apps/demo/package.json apps/demo/
+COPY apps/campus-voice/package.json apps/campus-voice/
 RUN npm ci --no-audit --no-fund
 
 COPY packages/sdk packages/sdk
