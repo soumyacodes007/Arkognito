@@ -12,6 +12,15 @@ Arkognito writes through shared relayers and gives each record a fresh owner add
 records and prove ownership without publishing their main-wallet-to-record mapping. Optional
 Semaphore proofs let approved group members submit without identifying which member submitted.
 
+**Live on Tiramisu:**
+[Campus Voice](https://campus-voice-production-8155.up.railway.app) (students report a professor
+without being identified: Anon Aadhaar test card → Semaphore → Arkognito, see
+[`apps/campus-voice`](apps/campus-voice/README.md)) ·
+[Sketch App and observer view](https://arkognito.vercel.app) ·
+relayers [relay-1](https://relay-1-production-4689.up.railway.app/healthz) and
+[relay-2](https://relay-2-production-954b.up.railway.app/healthz). Wallets that create the entities:
+[`wallets.md`](wallets.md). Schema and queries: [`arkiv/schema.md`](arkiv/schema.md).
+
 > Experimental, Tiramisu testnet only. Arkognito reduces wallet linkage; it does not provide complete
 > anonymity. Public metadata, content, timing, small groups and network observations can identify
 > users. No independent security audit has been performed. Use synthetic demo data only.
@@ -23,8 +32,9 @@ Semaphore proofs let approved group members submit without identifying which mem
 - Applications that separate public record ownership from a user's main wallet.
 
 Your application decides who joins. Semaphore proves membership, not citizenship, unique personhood
-or the truth of a report. Anon Aadhaar is an optional future admission integration; only its separate
-synthetic test proof was exercised. A combined credential adapter is not included. ZK Email is deferred.
+or the truth of a report. The Campus Voice demo admits members with an Anon Aadhaar **test-mode** proof
+(synthetic cards signed by Anon Aadhaar's published test key; real cards are refused); the SDK itself
+ships no credential adapter. ZK Email is deferred.
 
 ## Architecture
 

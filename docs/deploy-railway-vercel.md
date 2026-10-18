@@ -7,8 +7,16 @@ Public demo: [Sketch App](https://arkognito.vercel.app),
 [private sketches](https://arkognito.vercel.app/sketch-private.html).
 
 Live relayer health checks:
-[relay-1](https://relay-1-production-80f5.up.railway.app/healthz) and
-[relay-2](https://relay-2-production-6f0f.up.railway.app/healthz).
+[relay-1](https://relay-1-production-4689.up.railway.app/healthz) and
+[relay-2](https://relay-2-production-954b.up.railway.app/healthz) (redeployed 18 Oct 2026 in a new
+Railway project; the 13 Oct services are gone).
+
+Campus Voice: [campus-voice-production-8155.up.railway.app](https://campus-voice-production-8155.up.railway.app),
+one Railway service built from [`apps/campus-voice/Dockerfile`](../apps/campus-voice/Dockerfile) with
+[`apps/campus-voice/railway.json`](../apps/campus-voice/railway.json) as its config. Variables:
+`TEST_RELAYER_A_PRIVATE_KEY` (shared relayer), `TEST_RELAYER_B_PRIVATE_KEY` (student union),
+`CAMPUS_ARKIV_ACCESS_KEY`, `CAMPUS_STATIC=on`, `PORT=8790`; generate the domain on port 8790.
+Do not run `npm run dev:campus` locally while it is deployed: both would sign from the same wallets.
 
 What you will end up with:
 

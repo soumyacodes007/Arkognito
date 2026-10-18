@@ -100,3 +100,13 @@ SDK version · network · what we tried · what happened · what we expected · 
 - **Why it matters:** membership verification needs the group's state at each proof's root block, so a relayer cannot admit posts and a reader cannot show the feed while history reads are slow.
 - **Steps:** create a group, wait a few hundred blocks, then time `arkiv_query` for `project = str('<project>') AND $creator = addr(<admin>)` with `select: { key: true }` at the head, at head−5 and at `fromBlock+5`.
 - **Workaround:** Campus Voice reads with a 60 s timeout and retries 502/503/504 twice (never 429). That rides out slow responses but not repeated 504s.
+
+## Access keys that worked earlier now return 401 `INVALID_KEY`, and the relayer's heartbeat dies with them — 18 Oct 2026
+
+- **SDK / network:** `@arkiv-network/sdk` 0.8.1, `viem` 2.57.4, Node 22 (Railway) and Node 24.13.1 (local) · Tiramisu (7738577) · Hub access keys sent as `X-API-KEY` via viem `http(url, { fetchOptions })`.
+- **What we tried:** redeploy relay-1/relay-2 on Railway around 20:40 UTC with the same `ARKIV_ACCESS_KEY` the relayers had used since 13 Oct; Campus Voice's separate `CAMPUS_ARKIV_ACCESS_KEY` was in use earlier the same day.
+- **What happened:** every `arkiv_query` with either key returned **HTTP 401** `{"error":"INVALID_KEY","message":"unknown API key"}`. The relayer logged `heartbeat failed: HTTP request failed. Status: 401`, so it published no `arkognito.relayer` entity and the demo's relayer discovery found nothing. The same request without the header returned 200.
+- **What we expected:** a key that is revoked or expired to be visible as such in the Hub (with a date), or a notification; ideally a distinct error code (`KEY_REVOKED` / `KEY_EXPIRED`) rather than "unknown".
+- **Why it matters:** an app that adds a key to get past the anonymous budget becomes *less* available than an app with no key at all when the key silently stops working.
+- **Steps:** `curl -s -X POST https://rpc.tiramisu.db-chain.testnet.arkiv.network -H 'content-type: application/json' -H 'X-API-KEY: <old key>' --data '{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}'` → 401; repeat without the header → 200.
+- **Workaround:** removed the key from the Railway services so they read anonymously (and accept the `429 ANON_COST_LIMITED` risk logged above). A client could fall back to anonymous on `INVALID_KEY`; we did not add that, because silently changing quota tiers hides the problem.
