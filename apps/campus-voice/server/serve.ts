@@ -3,9 +3,9 @@
 //   classmates, and the complaints committee (reads reports, verifies ownership proofs).
 // The browser is the student's device: its vault, recovery code and proofs never come here.
 //   npm run server -w campus-voice     (Vite proxies /api, /relay and /rpc to this process)
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync } from "node:fs"
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
-import { join } from "node:path"
+import { extname, join, normalize } from "node:path"
 import { bytesToHex, hexToBytes, type Hex } from "viem"
 import { newRequesterKey, verifyOwnershipProof } from "arkognito"
 import {
@@ -30,11 +30,14 @@ import {
 } from "./campus"
 import { NULLIFIER_SEED, makeTestCard, testCertificate, verifyJoin } from "./aadhaar"
 
-const PORT = Number(process.env.CAMPUS_API_PORT ?? 8790)
+const PORT = Number(process.env.CAMPUS_API_PORT ?? process.env.PORT ?? 8790)
 const RELAY_PORT = Number(process.env.CAMPUS_RELAY_PORT ?? 8791)
 const RPC = "https://rpc.tiramisu.db-chain.testnet.arkiv.network"
 const accessKey = process.env.CAMPUS_ARKIV_ACCESS_KEY || undefined
 const ARTIFACTS = join(ROOT, "spikes/s1-semaphore-node/artifacts")
+// Deployed (CAMPUS_STATIC=on), this one port also serves the built page and forwards /relay, as Vite does locally.
+const STATIC = process.env.CAMPUS_STATIC === "on" ? join(ROOT, "apps/campus-voice/dist") : ""
+const MIME: Record<string, string> = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".wasm": "application/wasm", ".json": "application/json", ".png": "image/png" }
 const MAX_MEMBERS = 8 // depth-3 groups
 const CURRENT = join(STATE, "current.json")
 
@@ -220,6 +223,9 @@ const server = createServer(async (req, res) => {
   const base = `/${parts.slice(0, 2).join("/")}`
   const handler = routes[`${req.method} ${path}`] ?? routes[`${req.method} ${base}`] ?? routes[`${req.method} /${parts[0]}`]
   const arg = routes[`${req.method} ${path}`] ? undefined : parts[parts.length - 1]
+  if (path === "/healthz") return json(res, 200, { ok: true, ready: isReady, error: setupError || undefined })
+  if (STATIC && parts[0] === "relay") return forwardToRelay(req, res)
+  if (!handler && STATIC && req.method === "GET") return serveStatic(path, res)
   if (!handler) return json(res, 404, { error: "not found" })
   if (!isReady && path.startsWith("/api/")) return json(res, 503, { error: setupError ? `Setup failed: ${setupError}` : "Setting up the campus on Arkiv…", setup: !setupError })
   try {
@@ -230,6 +236,31 @@ const server = createServer(async (req, res) => {
     if (!res.headersSent) json(res, 500, { error: msg.split("\n")[0].slice(0, 300) })
   }
 })
+
+function serveStatic(path: string, res: ServerResponse) {
+  const rel = normalize(path).replace(/^([/\\]|\.\.[/\\])+/, "")
+  let file = join(STATIC, rel)
+  if (!file.startsWith(STATIC) || !existsSync(file) || statSync(file).isDirectory()) file = join(STATIC, "index.html") // client-side routes
+  const type = MIME[extname(file)] ?? "application/octet-stream"
+  res.writeHead(200, { "content-type": type, "cache-control": file.includes("/assets/") || file.includes("\\assets\\") ? "max-age=31536000, immutable" : "no-cache" })
+  res.end(readFileSync(file))
+}
+
+async function forwardToRelay(req: IncomingMessage, res: ServerResponse) {
+  try {
+    const body = req.method === "GET" || req.method === "HEAD" ? undefined : await readBody(req)
+    const r = await fetch(`http://127.0.0.1:${RELAY_PORT}${(req.url ?? "/").replace(/^\/relay/, "") || "/"}`, {
+      method: req.method,
+      headers: { "content-type": req.headers["content-type"] ?? "application/json" },
+      body,
+      signal: AbortSignal.timeout(120_000),
+    })
+    res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json" })
+    res.end(Buffer.from(await r.arrayBuffer()))
+  } catch (e) {
+    if (!res.headersSent) json(res, 502, { error: `relayer unavailable: ${(e as Error).message}` })
+  }
+}
 
 mkdirSync(STATE, { recursive: true })
 if (!existsSync(join(ARTIFACTS, "semaphore-3.wasm"))) console.warn("[campus] proving files missing: run `npm run test:semaphore:live` once, or download them (see docs/semaphore.md)")

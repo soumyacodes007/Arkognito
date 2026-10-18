@@ -51,7 +51,8 @@ export const rulesFor = (prof: ProfessorId): SemaphoreRules => ({
   scope: { kind: "fixed", id: `report-${prof}` },
 })
 
-process.loadEnvFile(join(ROOT, ".env"))
+// Locally the keys come from the repo's .env; in a container they are plain environment variables.
+if (existsSync(join(ROOT, ".env"))) process.loadEnvFile(join(ROOT, ".env"))
 // Optional app-level settings (gitignored), e.g. CAMPUS_ARKIV_ACCESS_KEY.
 const appEnv = resolve(import.meta.dirname, "../.env")
 if (existsSync(appEnv)) process.loadEnvFile(appEnv)

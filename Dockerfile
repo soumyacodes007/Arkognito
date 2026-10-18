@@ -11,6 +11,7 @@ COPY apps/demo/package.json apps/demo/
 COPY apps/campus-voice/package.json apps/campus-voice/
 RUN npm ci --no-audit --no-fund
 
+COPY docs/semaphore.md docs/
 COPY packages/sdk packages/sdk
 COPY packages/relayer packages/relayer
 RUN npm run build -w arkognito
